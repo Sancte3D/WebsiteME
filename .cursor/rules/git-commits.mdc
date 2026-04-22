@@ -1,0 +1,41 @@
+---
+description: Git commit messages and staging—only include intended changes, describe what changed
+alwaysApply: true
+---
+
+# Git: commits and uploads
+
+## Staging
+
+- **Stage only files that belong to the change** being committed. List paths explicitly (e.g. `git add HOME/foo.html path/to/file.css`).
+- **Do not** use `git add -A` or `git add .` unless the user clearly wants the entire working tree in one commit.
+- If the working tree mixes **unrelated** edits, either **separate commits** (one per topic) or ask the user which files to include.
+
+## Commit messages
+
+- The message must **describe what actually changed** (and why, if it is not obvious)—not generic text like "update" or "fixes".
+- Use a **short subject line** (imperative mood is fine, e.g. "HOME: improve mobile nav focus order").
+- Add a **body** when the change is not trivial: bullet-style lines are OK (layout, a11y, which areas touched).
+- If the user asked for a **push** after commit, use `git push` only for commits that are complete and match what they want uploaded.
+
+## Examples
+
+```text
+# ❌ Bad subject
+"updates"
+"fix stuff"
+
+# ✅ Good subject
+"HOME: add brand icon placeholder and custom cursor (desktop only)"
+"Tools: correct export path in geometric icon tool"
+```
+
+```bash
+# ❌ Avoid for a focused change
+git add -A
+git commit -m "changes"
+
+# ✅ Prefer
+git add HOME/home.html HOME/persancte-ui.css
+git commit -m "HOME: adjust hero min-height and artifact stage" -m "Prevent collapsed stage when stacked; tighten landscape query."
+```
