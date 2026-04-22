@@ -1,0 +1,318 @@
+PERSANCTE UI KLON-SPEC V2 (1:1 REPRODUCIBLE)
+Datei: home_ui_architektur.txt
+Scope: Verbindliche Design-, Layout-, Responsive- und Interaktions-Spezifikation
+Ziel: Mit diesem Dokument kann dieselbe UI-Sprache auf neue HTML-Dateien konsistent geklont werden.
+
+==================================================
+A. VERBINDLICHE REGELN
+==================================================
+1) Light-First ist Standard.
+2) Alle Farben, Abstände und Typo-Werte nur über Tokens steuern.
+3) Keine ad-hoc Pixelwerte außerhalb der Spezifikation.
+4) Responsive Verhalten ist "fluid + breakpoint", nicht "nur breakpoint".
+5) A11y ist verpflichtend: Skip-Link, focus-visible, semantische Landmarken.
+6) Interaktion muss auf Touch ohne Hover funktionieren.
+
+==================================================
+B. DESIGN TOKENS (EXAKT ÜBERNEHMEN)
+==================================================
+Folgende Tokens müssen in :root identisch vorhanden sein:
+
+Farben:
+- --bg: #efefe9
+- --bg-deep: #e3e1d8
+- --bg-top: #f9f9f5
+- --sheet: #fbfaf4
+- --panel: rgba(255,255,255,0.78)
+- --panel-strong: rgba(255,255,255,0.92)
+- --line: rgba(16,16,16,0.10)
+- --line-strong: rgba(16,16,16,0.18)
+- --text: #111111
+- --muted: rgba(17,17,17,0.56)
+- --accent: #111111
+
+Schatten:
+- --shadow: 0 24px 54px rgba(0,0,0,0.08)
+- --shadow-large: 0 32px 60px rgba(0,0,0,0.06)
+
+Radius:
+- --radius-xl: clamp(20px, 2.2vw, 28px)
+- --radius-lg: clamp(18px, 1.8vw, 24px)
+- --radius-md: clamp(14px, 1.4vw, 18px)
+- --radius-sm: clamp(10px, 1vw, 14px)
+
+Layout:
+- --max: 1280px
+- --ease: cubic-bezier(.2,.8,.2,1)
+- --gutter: clamp(16px, 3.2vw, 48px)
+- --section-gap: clamp(16px, 2.4vw, 32px)
+- --card-gap: clamp(10px, 1.2vw, 16px)
+- --card-pad: clamp(14px, 1.6vw, 22px)
+- --hero-pad: clamp(16px, 2.4vw, 28px)
+- --panel-pad: clamp(14px, 1.8vw, 24px)
+
+Typografie:
+- --fs-body: clamp(13px, 0.45vw + 12px, 15px)
+- --fs-support: clamp(13px, 0.3vw + 12px, 15px)
+- --fs-section: clamp(24px, 2.6vw + 8px, 38px)
+- --fs-card-title: clamp(18px, 0.9vw + 14px, 24px)
+- --fs-sub-title: clamp(16px, 0.55vw + 14px, 20px)
+
+Header/Scroll:
+- --header-height: 72px (Fallback, dynamisch von JS überschrieben)
+- --scroll-offset: calc(var(--header-height) + 20px)
+
+==================================================
+C. GLOBAL BASELINE
+==================================================
+HTML/Viewport:
+- <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+- <meta name="color-scheme" content="light">
+
+Base CSS:
+- html: scroll-behavior: smooth; text-size-adjust 100%.
+- body:
+  - min-height: 100vh + 100svh + 100dvh
+  - font-size: var(--fs-body)
+  - gradient Hintergrund mit --bg-top/--bg/--bg-deep
+  - overflow-x: hidden
+  - safe area paddings left/right per env()
+
+Page Container:
+- width: min(var(--max), calc(100% - 2 * var(--gutter)))
+- margin: 0 auto
+- padding top fluid
+- padding bottom: var(--section-gap) + safe-area-bottom
+
+Section Offset:
+- :where(section, footer) => scroll-margin-top: var(--scroll-offset)
+- :where(a, button, [tabindex]) => scroll-margin-top: var(--scroll-offset)
+
+==================================================
+D. TYPO + HIERARCHIE
+==================================================
+Text-System:
+- Hero Title: clamp(32px, 4.2vw + 12px, 76px), line-height 0.94, tight tracking
+- Section Title: var(--fs-section), line-height 0.96
+- Card Title: var(--fs-card-title)
+- Sub-Title: var(--fs-sub-title)
+- Support Text: var(--fs-support), line-height 1.5
+
+Wrapping:
+- text-wrap: balance auf Haupttiteln
+- overflow-wrap + word-break auf allen relevanten Textblöcken
+
+==================================================
+E. KOMPONENTEN SPEZIFIKATION (KLONBAR)
+==================================================
+E1) PANEL / SURFACE
+- .panel:
+  - background: var(--panel)
+  - border: 1px solid var(--line)
+  - border-radius: var(--radius-lg)
+  - box-shadow: var(--shadow)
+  - backdrop-filter: blur(12px)
+- .surface:
+  - background: var(--panel-strong)
+  - border: 1px solid var(--line)
+  - border-radius: var(--radius-md)
+
+E2) BUTTONS
+- .button:
+  - solid accent background, white text
+- .button-ghost:
+  - strong panel background + border
+- Beide:
+  - inline-flex, center, rounded pill
+  - min touch height 44px (auf coarse pointer)
+  - focus-visible outline
+
+E3) HEADER + NAV
+Desktop:
+- Sticky Header mit top clamp(10..18)
+- links Brand, Mitte Nav, rechts CTA
+
+Mobile <=820:
+- nav-toggle sichtbar (44x44)
+- Desktop CTA verstecken
+- Nav als vertikale Liste (display none bis open)
+- open state via .header-shell[data-nav-open="true"]
+- mobile CTA als letzter Punkt in der offenen Nav
+
+Zustände:
+- aria-expanded toggeln
+- aria-label zwischen "Open menu" / "Close menu"
+- Escape schließt
+- Outside click schließt
+- Link click schließt
+
+E4) HERO
+- Desktop: 2 Spalten (5fr / 7fr)
+- Tablet/Mobile: 1 Spalte
+- Hero-Content und Hero-Visual erhalten var(--hero-pad)
+- Artifact Stage auf kleinen Displays signifikant reduzieren
+
+E5) WORK GRID
+- Desktop: repeat(12, minmax(0, 1fr))
+- Standard Cards span 6 (large), auf Mobile 1 Spalte
+- .work-visual:
+  - aspect-ratio: 4 / 3
+  - min-height clamp als fallback
+
+E6) CAPABILITY GRID
+- repeat(auto-fit, minmax(240px, 1fr))
+- Card Padding: var(--card-pad)
+- Card Gap: var(--card-gap)
+
+E7) SYSTEM GRID
+- repeat(auto-fit, minmax(280px, 1fr))
+- .system-preview:
+  - aspect-ratio: 16 / 10
+  - min-height clamp fallback
+- Full-card click per stretched-link:
+  - .system-action::after absolute inset 0
+  - Karte relative position
+  - Fokus sichtbar auf Karte (z.B. :has focus-visible)
+
+E8) CONTACT BAND
+- Desktop: 1fr + auto
+- Tablet/Mobile: 1 Spalte
+- CTA Block auf Mobile linksbündig
+
+==================================================
+F. RESPONSIVE MATRIX (VERBINDLICH)
+==================================================
+Ultra Large:
+- >=3000: --max 1880
+- >=2400: --max 1720
+- >=1920: --max 1560
+- >=1680: --max 1440 + Hintergrundraster schwächer
+- >=1440: --max 1360
+
+Desktop/Tablet:
+- <=1280: Hero auf 4fr / 6fr
+- <=1080:
+  - Hero/Practice/Contact stacken
+  - Work wide cards auf 1 Spalte
+
+Mobile:
+- <=820:
+  - Hamburger aktiv
+  - Work Grid 1 Spalte
+- <=560:
+  - kompakter Hero (Artifact kleiner)
+  - Buttons/Nav touch-optimiert
+- <=380:
+  - enge Gutter, kompakte Mikrotypografie
+
+Landscape short:
+- orientation: landscape + max-height 560:
+  - sticky header optional statisch
+  - Artifact Stage reduziert
+
+==================================================
+G. INTERAKTIONSLOGIK (JS, VERBINDLICH)
+==================================================
+G1) Header Height Sync:
+- Headerhöhe messen (getBoundingClientRect)
+- --header-height und --scroll-offset auf :root setzen
+- Trigger: load, resize, orientationchange, ResizeObserver
+
+G2) Scrollspy:
+- Beobachte IDs: top, work, capabilities, systems, contact
+- active nav link via aria-current="page"
+- IntersectionObserver mit zentraler Bandlogik
+
+G3) Hide-on-Scroll Header:
+- Beim Scroll-down nach kleinem Threshold -> header hidden
+- Beim Scroll-up -> sichtbar
+- Wenn Mobile Nav offen -> immer sichtbar
+
+G4) Mobile Nav:
+- Toggle state in data-nav-open
+- close on escape/outside/link click
+- close on breakpoint switch zurück zu desktop
+
+G5) Prefetch:
+- Bei pointerenter, touchstart, focus interne links prefetch
+- Nicht prefetchen: #, mailto:, tel:, externe origin
+
+==================================================
+H. ACCESSIBILITY STANDARD (NICHT OPTIONAL)
+==================================================
+- Skip-Link auf #main
+- main mit id und tabindex=-1
+- Focus-visible Outlines auf interaktiven Elementen
+- Touch-Targets >=44px auf coarse pointer
+- Semantik: header/nav/main/section/footer
+- aria-labels für nav toggle und primäre nav
+
+==================================================
+I. PREFERENCES & MEDIA QUERIES
+==================================================
+prefers-reduced-motion:
+- keine transform-lastige motion
+- farb-/opacity-feedback kann bleiben (kurz)
+
+prefers-reduced-transparency:
+- blur deaktivieren, solid surfaces
+
+prefers-contrast: more:
+- line/muted kontrastreicher
+
+print:
+- nav/cta/interaktive links ausblenden
+- Hintergründe neutralisieren
+
+==================================================
+J. KLON-PROZESS FÜR NEUE HTML DATEIEN (1:1)
+==================================================
+Schritt 1:
+- Base Shell übernehmen: meta, :root tokens, base css, page wrapper.
+
+Schritt 2:
+- Komponentenblöcke übernehmen:
+  - Header/Nav
+  - Hero
+  - Grid Cards
+  - Contact
+  - Footer
+
+Schritt 3:
+- JS Block übernehmen:
+  - header sync
+  - nav toggle
+  - scrollspy
+  - hide on scroll
+  - prefetch
+
+Schritt 4:
+- Nur Inhalte ersetzen:
+  - Texte, Labels, Links, Bilder
+  - keine Systemwerte ändern
+
+Schritt 5:
+- Abnahme auf Viewports:
+  - 320, 375/390, 560, 768, 820, 1024, 1280, 1440, 1680, 1920, 2560, 3440
+
+==================================================
+K. AKZEPTANZKRITERIEN (DONE-DEFINITION)
+==================================================
+Eine neue Seite gilt als 1:1 systemkonform wenn:
+1) Alle Tokens vorhanden und genutzt sind.
+2) Header/Nav-Logik identisch funktioniert.
+3) Breakpoint-Matrix sichtbar gleich reagiert.
+4) Abstände/Typo auf jedem Viewport dem System folgen.
+5) Fokus, Skip-Link, Touch-Targets korrekt sind.
+6) Keine willkürlichen Sonderstile eingeführt wurden.
+
+==================================================
+L. OPTIONALER NÄCHSTER SCHRITT
+==================================================
+Für maximale Reproduzierbarkeit:
+- Diese Spec in 2 technische Artefakte überführen:
+  1) persancte-ui.css (komplette System-CSS)
+  2) persancte-ui.js (komplette Interaktionslogik)
+- Neue Seiten binden nur diese zwei Dateien ein und liefern nur Content-Markup.
+
+ENDE DER KLON-SPEZ V2

@@ -1,0 +1,24 @@
+WEBSITE UI CLONER - HOW TO USE
+
+1) Open terminal:
+cd "/Users/mrmouse/Downloads/CLONE"
+
+2) Run the tool:
+python3 website_ui_cloner.py "https://example.com" -o "./output-example"
+
+3) Open generated files:
+- output-example/index.html
+- output-example/ui-system.css
+- output-example/ui-report.md
+
+Useful options:
+- Custom output folder:
+  -o "./my-clone"
+- Longer timeout:
+  --timeout 30
+
+Example:
+python3 website_ui_cloner.py "https://www.apple.com" -o "./clone-apple" --timeout 30
+
+Note:
+Use only on websites you own or have permission to analyze.
