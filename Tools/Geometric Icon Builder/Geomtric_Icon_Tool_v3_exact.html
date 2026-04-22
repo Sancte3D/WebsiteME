@@ -3,7 +3,19 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Alternative version — Vector Core Step 1</title>
+<title>Alternative version — Vector Core Step 1 · v3 exact (polygon-clipping)</title>
+<!--
+  v3 / exact Shape-Builder:
+  Die Shape-Builder-Topologie (welche Regionen existieren, welche Maske hat jede
+  Region) wird nicht mehr über einen Rastergitter-Scan ermittelt, sondern über
+  exakte 2D-Polygon-Booleans. Das eliminiert:
+    · adaptive Zellgröße & deren Lag beim Aktivieren auf großen Shapes
+    · Treppenartefakte in der rohen Geometrie
+    · numerische Edge-Cases bei fast-tangentialen Overlaps
+  Die vectorNode-basierte SVG/PNG-Export-Pipeline bleibt unverändert und
+  zeichnet weiterhin exakte Primitive (Kreis/Ellipse/Rect) mit clip-paths.
+-->
+<script src="https://cdn.jsdelivr.net/npm/polygon-clipping@0.15.7/dist/polygon-clipping.umd.js"></script>
 <style>
   :root {
     --bg: #efefe9;
@@ -339,11 +351,32 @@
   .object-item {
     border: 1px solid var(--line); background: var(--panel-strong); border-radius: 14px; padding: 10px 12px;
     font-size: 12px; cursor: pointer; transition: transform 140ms var(--ease), border-color 140ms var(--ease), background 140ms var(--ease);
+    display: grid; grid-template-columns: 1fr auto; align-items: center; column-gap: 10px;
   }
   .object-item:hover { transform: translateY(-1px); border-color: var(--line-strong); background:#fff; }
   .object-item.active { background: rgba(17,17,17,0.95); color:#fff; border-color: transparent; }
   .object-meta, .small { color: var(--muted); font-size: 12px; }
   .object-item.active .object-meta { color: rgba(255,255,255,0.72); }
+  .object-item-text { min-width: 0; overflow: hidden; }
+  .object-item-text strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .object-fill-toggle {
+    display: inline-flex; gap: 2px; padding: 2px; border-radius: 8px;
+    background: rgba(0,0,0,0.04); border: 1px solid var(--line);
+    flex-shrink: 0;
+  }
+  .object-item.active .object-fill-toggle { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); }
+  .object-fill-toggle button {
+    all: unset; display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 20px; border-radius: 6px; cursor: pointer;
+    color: var(--muted); transition: background 120ms var(--ease), color 120ms var(--ease);
+  }
+  .object-fill-toggle button:hover { color: var(--text); background: rgba(0,0,0,0.05); }
+  .object-item.active .object-fill-toggle button:hover { color: #fff; background: rgba(255,255,255,0.10); }
+  .object-fill-toggle button.active { background: #fff; color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
+  .object-item.active .object-fill-toggle button.active { background: #fff; color: #111; }
+  .object-fill-toggle svg { width: 12px; height: 12px; }
+  /* ghost state on the global Fill/Outline toggle when the selection is mixed */
+  .seg-btn.mixed { background: repeating-linear-gradient(135deg, rgba(0,0,0,0.05) 0 4px, transparent 4px 8px); color: var(--muted); }
   .selection-grid { display:grid; gap: 8px; }
   .prop-row { display:grid; grid-template-columns: 1fr 1fr; gap:8px; }
 
@@ -596,7 +629,7 @@
     <div class="topbar">
       <div class="topbar-group">
         <div>
-          <div class="status-kicker">Workspace</div>
+          <div class="status-kicker">Workspace · <span style="color:#2a7a3d;font-weight:600;">v3 exact</span></div>
           <div class="status-title"><span id="activeToolLabel">Select</span></div>
           <div class="status-detail" id="statusText"></div>
         </div>
@@ -2362,6 +2395,15 @@
   function toggleShapeBuilder() {
     state.shapeBuilderEnabled = !state.shapeBuilderEnabled;
     if (state.shapeBuilderEnabled) {
+      // The exact-boolean backend needs polygon-clipping loaded. If the CDN
+      // script failed (offline, blocked, etc.), there's no safe fallback and
+      // the builder would silently produce nothing — so bail out loudly.
+      if (!polyClippingAvailable()) {
+        flashStatus('Shape Builder konnte nicht starten: polygon-clipping library nicht geladen. Internetverbindung prüfen und Seite neu laden.');
+        state.shapeBuilderEnabled = false;
+        render();
+        return;
+      }
       setActiveTool('select');
       if (getShapeBuilderEligibleShapes().length < 2) {
         const eligible = state.shapes.filter(s => s && s.visible && !s.constructionOnly && ['circle','ellipse','rect','compound'].includes(s.type));
@@ -2418,155 +2460,282 @@
     return shapes.map(shape => [shape.id, shape.type, round(shape.x), round(shape.y), round(shape.w || 0), round(shape.h || 0), round(shape.r || 0), round(shape.rotation || 0), shape.pathData || ''].join(':')).join('|');
   }
 
+  // ==========================================================================
+  //  v3 / EXACT SHAPE-BUILDER  (polygon-clipping based)
+  // ==========================================================================
+  //
+  //  Die alte Raster-Pipeline ist komplett ersetzt durch exakte 2D-Polygon-
+  //  Booleans auf Basis der `polygon-clipping` Library (Martinez-Algorithmus).
+  //
+  //  Ablauf pro Cache-Build:
+  //    1) Jede eligible Shape wird zu einem MultiPolygon geflatten (Kreise /
+  //       Ellipsen mit N~circumference/1.5 Punkten, Rects exakt).
+  //    2) Für jedes non-empty Bitmask m ∈ [1 .. 2^N-1] wird das Schnitt-Minus
+  //       berechnet:   intersect(included) \ union(excluded)
+  //       Leere Ergebnisse werden verworfen.
+  //    3) Nicht-leere Ergebnisse sind die Regionen; ihre Ringe sind sofort der
+  //       exakte Geometrie-Umriss (keine Treppen, kein Smoothing nötig).
+  //
+  //  Hit-Test: ray-casting direkt auf dem Region-MultiPolygon.
+  //  Commit:   union aller betroffenen Region-Polygone → pathData + loops.
+  //  vectorNode-basierter SVG-Export bleibt unverändert.
+  //
+  //  N wird bei Bedarf auf 12 gekappt (2^12 = 4096 Masken, alles darüber wäre
+  //  kombinatorisch explosiv; Shape Builder auf >12 überlappenden Shapes ist
+  //  in der Praxis irrelevant).
+  // --------------------------------------------------------------------------
+
+  const POLY_BUILDER_MAX_SHAPES = 12;
+
+  function polyClippingAvailable() {
+    return typeof window !== 'undefined' && typeof window.polygonClipping !== 'undefined';
+  }
+
+  // Flatten any eligible shape to MultiPolygon = Polygon[] = [OuterRing, ...Holes][]
+  // A Ring is [x, y][]; first + last point do NOT repeat (per polygon-clipping spec).
+  function shapeToMultiPolygon(shape) {
+    if (!shape) return [];
+    if (shape.type === 'circle') return [[circleRing(shape.x, shape.y, shape.r)]];
+    if (shape.type === 'ellipse') return [[ellipseRing(shape.x, shape.y, shape.w / 2, shape.h / 2, shape.rotation || 0)]];
+    if (shape.type === 'rect' || shape.type === 'frame') {
+      const pts = rotatedRectPoints(shape);
+      return [[pts.map(pt => [pt.x, pt.y])]];
+    }
+    if (shape.type === 'compound' && shape.compoundLoops && shape.compoundLoops.length) {
+      // Use the even-odd (xor) union of the existing loops so inner holes are
+      // correctly represented as holes in the resulting MultiPolygon.
+      const rings = shape.compoundLoops
+        .map(loop => loop.map(p => [p.x, p.y]))
+        .filter(ring => ring.length >= 3);
+      if (!rings.length) return [];
+      let mp = [[rings[0]]];
+      for (let i = 1; i < rings.length; i++) {
+        try { mp = window.polygonClipping.xor(mp, [[rings[i]]]); } catch (err) { return mp; }
+      }
+      return mp;
+    }
+    return [];
+  }
+
+  function circleRing(cx, cy, r) {
+    if (!(r > 0)) return [];
+    const circumference = 2 * Math.PI * r;
+    const segmentPx = 1.25; // ≤1.25px error budget between polyline and true arc
+    const N = Math.max(32, Math.min(512, Math.ceil(circumference / segmentPx)));
+    const ring = new Array(N);
+    for (let i = 0; i < N; i++) {
+      const a = (i / N) * Math.PI * 2;
+      ring[i] = [cx + Math.cos(a) * r, cy + Math.sin(a) * r];
+    }
+    return ring;
+  }
+
+  function ellipseRing(cx, cy, rx, ry, rotDeg) {
+    if (!(rx > 0) || !(ry > 0)) return [];
+    const perim = Math.PI * (3 * (rx + ry) - Math.sqrt((3 * rx + ry) * (rx + 3 * ry)));
+    const N = Math.max(32, Math.min(512, Math.ceil(perim / 1.25)));
+    const rad = (rotDeg || 0) * Math.PI / 180;
+    const cos = Math.cos(rad), sin = Math.sin(rad);
+    const ring = new Array(N);
+    for (let i = 0; i < N; i++) {
+      const a = (i / N) * Math.PI * 2;
+      const lx = Math.cos(a) * rx;
+      const ly = Math.sin(a) * ry;
+      ring[i] = [cx + lx * cos - ly * sin, cy + lx * sin + ly * cos];
+    }
+    return ring;
+  }
+
+  function multiPolyIsEmpty(mp) {
+    return !mp || !mp.length || !mp[0] || !mp[0].length || !mp[0][0] || mp[0][0].length < 3;
+  }
+
+  function multiPolyToLoops(mp) {
+    const loops = [];
+    if (!mp) return loops;
+    for (const poly of mp) {
+      for (const ring of poly) {
+        if (!ring || ring.length < 3) continue;
+        loops.push(ring.map(([x, y]) => ({ x, y })));
+      }
+    }
+    return loops;
+  }
+
+  function ringCentroid(ring) {
+    let area = 0, cx = 0, cy = 0;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const [xi, yi] = ring[i];
+      const [xj, yj] = ring[j];
+      const cross = xj * yi - xi * yj;
+      area += cross;
+      cx += (xi + xj) * cross;
+      cy += (yi + yj) * cross;
+    }
+    area *= 0.5;
+    if (Math.abs(area) < 1e-9) {
+      // degenerate → arithmetic mean
+      let sx = 0, sy = 0;
+      ring.forEach(([x, y]) => { sx += x; sy += y; });
+      return { x: sx / ring.length, y: sy / ring.length };
+    }
+    return { x: cx / (6 * area), y: cy / (6 * area) };
+  }
+
+  function multiPolyCentroid(mp) {
+    if (multiPolyIsEmpty(mp)) return { x: 0, y: 0 };
+    return ringCentroid(mp[0][0]);
+  }
+
+  function pointInRing(ring, x, y) {
+    let inside = false;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const xi = ring[i][0], yi = ring[i][1];
+      const xj = ring[j][0], yj = ring[j][1];
+      if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) inside = !inside;
+    }
+    return inside;
+  }
+
+  function multiPolyContains(mp, x, y) {
+    if (!mp) return false;
+    for (const poly of mp) {
+      if (!poly.length) continue;
+      if (!pointInRing(poly[0], x, y)) continue;
+      let inHole = false;
+      for (let i = 1; i < poly.length; i++) {
+        if (pointInRing(poly[i], x, y)) { inHole = true; break; }
+      }
+      if (!inHole) return true;
+    }
+    return false;
+  }
+
+  function boundsOverlap(a, b) {
+    return !(a.x2 < b.x1 || b.x2 < a.x1 || a.y2 < b.y1 || b.y2 < a.y1);
+  }
+
   function getShapeBuilderCache() {
-    const shapes = getShapeBuilderEligibleShapes();
-    if (shapes.length < 2) return null;
+    const eligible = getShapeBuilderEligibleShapes();
+    if (eligible.length < 2) return null;
+    if (!polyClippingAvailable()) return null; // library not loaded yet
+    const shapes = eligible.slice(0, POLY_BUILDER_MAX_SHAPES);
     const key = shapeBuilderKey(shapes);
     if (state.shapeBuilderCache && state.shapeBuilderCache.key === key) return state.shapeBuilderCache;
 
-    let x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity;
-    shapes.forEach(shape => {
-      const b = getBounds(shape);
-      x1 = Math.min(x1, b.x1);
-      y1 = Math.min(y1, b.y1);
-      x2 = Math.max(x2, b.x2);
-      y2 = Math.max(y2, b.y2);
-    });
-    // Adaptive cell size — the raster grid is only used for topology (which regions
-    // exist, where to hover, which cells belong to them). The exported geometry is
-    // vector-exact, so we don't need 1-px resolution. Cap the grid at ~CELL_BUDGET
-    // cells so large shapes don't freeze the UI when the builder activates.
-    const CELL_BUDGET = 250000;
-    const padWorld = 4;
-    const spanX = Math.max(1, x2 - x1) + padWorld * 2;
-    const spanY = Math.max(1, y2 - y1) + padWorld * 2;
-    const cell = Math.max(1, Math.ceil(Math.sqrt((spanX * spanY) / CELL_BUDGET)));
-    const ox = Math.max(0, Math.floor((x1 - padWorld) / cell) * cell);
-    const oy = Math.max(0, Math.floor((y1 - padWorld) / cell) * cell);
-    const ex = Math.min(state.width, Math.ceil((x2 + padWorld) / cell) * cell);
-    const ey = Math.min(state.height, Math.ceil((y2 + padWorld) / cell) * cell);
-    const cols = Math.max(1, Math.ceil((ex - ox) / cell));
-    const rows = Math.max(1, Math.ceil((ey - oy) / cell));
-    const masks = new Uint32Array(cols * rows);
-    for (let row = 0; row < rows; row++) {
-      const y = oy + row * cell + cell * 0.5;
-      for (let col = 0; col < cols; col++) {
-        const x = ox + col * cell + cell * 0.5;
-        let mask = 0;
-        for (let i = 0; i < shapes.length; i++) {
-          if (pointInRenderableShape(shapes[i], { x, y })) mask |= (1 << i);
-        }
-        masks[row * cols + col] = mask;
-      }
+    const N = shapes.length;
+    const shapeBounds = shapes.map(getBounds);
+    let polys;
+    try {
+      polys = shapes.map(shapeToMultiPolygon).map(mp => (multiPolyIsEmpty(mp) ? [] : mp));
+    } catch (err) {
+      return null;
     }
-    const regionMap = new Int32Array(cols * rows);
-    regionMap.fill(-1);
+    // Precompute for each shape: its own polygon + bounding box used for fast
+    // mask-pruning.
+    const pc = window.polygonClipping;
+
+    let x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity;
+    shapeBounds.forEach(b => {
+      if (b.x1 < x1) x1 = b.x1;
+      if (b.y1 < y1) y1 = b.y1;
+      if (b.x2 > x2) x2 = b.x2;
+      if (b.y2 > y2) y2 = b.y2;
+    });
+
     const regions = [];
     let regionId = 0;
-    const queue = [];
-    for (let idx = 0; idx < masks.length; idx++) {
-      if (!masks[idx] || regionMap[idx] !== -1) continue;
-      const mask = masks[idx];
-      regionMap[idx] = regionId;
-      queue.length = 0;
-      queue.push(idx);
-      const cells = [];
-      let sumX = 0, sumY = 0;
-      let minC = Infinity, minR = Infinity, maxC = -Infinity, maxR = -Infinity;
-      while (queue.length) {
-        const current = queue.pop();
-        cells.push(current);
-        const row = Math.floor(current / cols);
-        const col = current % cols;
-        sumX += ox + col * cell + cell * 0.5;
-        sumY += oy + row * cell + cell * 0.5;
-        minC = Math.min(minC, col); minR = Math.min(minR, row);
-        maxC = Math.max(maxC, col); maxR = Math.max(maxR, row);
-        const neighbors = [current - 1, current + 1, current - cols, current + cols];
-        neighbors.forEach(next => {
-          if (next < 0 || next >= masks.length) return;
-          const nRow = Math.floor(next / cols);
-          const nCol = next % cols;
-          if (Math.abs(nRow - row) + Math.abs(nCol - col) !== 1) return;
-          if (masks[next] !== mask || regionMap[next] !== -1) return;
-          regionMap[next] = regionId;
-          queue.push(next);
+    const maskCount = 1 << N;
+    for (let mask = 1; mask < maskCount; mask++) {
+      // Quick bounding-box prune: the intersection bbox of all included shapes
+      // must be non-empty; any excluded shape fully covering that bbox means
+      // the region is empty.
+      let ix1 = -Infinity, iy1 = -Infinity, ix2 = Infinity, iy2 = Infinity;
+      let hasIncluded = false;
+      for (let i = 0; i < N; i++) {
+        if (!(mask & (1 << i))) continue;
+        hasIncluded = true;
+        const b = shapeBounds[i];
+        if (b.x1 > ix1) ix1 = b.x1;
+        if (b.y1 > iy1) iy1 = b.y1;
+        if (b.x2 < ix2) ix2 = b.x2;
+        if (b.y2 < iy2) iy2 = b.y2;
+      }
+      if (!hasIncluded || ix1 >= ix2 || iy1 >= iy2) continue;
+
+      // Compute intersect(included)
+      let region = null;
+      let empty = false;
+      for (let i = 0; i < N; i++) {
+        if (!(mask & (1 << i))) continue;
+        const p = polys[i];
+        if (!p.length) { empty = true; break; }
+        if (region === null) {
+          region = p;
+        } else {
+          try { region = pc.intersection(region, p); } catch (err) { empty = true; break; }
+          if (multiPolyIsEmpty(region)) { empty = true; break; }
+        }
+      }
+      if (empty || multiPolyIsEmpty(region)) continue;
+
+      // Subtract each excluded shape individually (cheaper than unioning first)
+      for (let i = 0; i < N; i++) {
+        if (mask & (1 << i)) continue;
+        // If this excluded shape's bbox doesn't intersect the included bbox,
+        // it can't affect us — skip for speed.
+        if (!boundsOverlap(shapeBounds[i], { x1: ix1, y1: iy1, x2: ix2, y2: iy2 })) continue;
+        const p = polys[i];
+        if (!p.length) continue;
+        try { region = pc.difference(region, p); } catch (err) { region = null; break; }
+        if (multiPolyIsEmpty(region)) break;
+      }
+      if (multiPolyIsEmpty(region)) continue;
+
+      // polygon-clipping returns a MultiPolygon that may contain multiple
+      // connected components. Split them into separate regions so the builder
+      // can merge / erase them individually, matching the old raster semantics.
+      for (const poly of region) {
+        if (!poly || !poly.length || poly[0].length < 3) continue;
+        const loops = [poly[0].map(([x, y]) => ({ x, y }))];
+        for (let h = 1; h < poly.length; h++) {
+          if (poly[h].length >= 3) loops.push(poly[h].map(([x, y]) => ({ x, y })));
+        }
+        const bounds = loopsBounds(loops);
+        const centroid = ringCentroid(poly[0]);
+        const pathData = loopsToPathData(loops);
+        regions.push({
+          id: regionId++,
+          mask,
+          polygon: [poly],            // single-poly MultiPolygon for unions later
+          loops,
+          pathData,
+          bounds,
+          centroid
         });
       }
-      const geometry = buildCompoundGeometry(cells, cols, rows, cell, ox, oy);
-      regions.push({
-        id: regionId,
-        mask,
-        cells,
-        pathData: geometry.pathData,
-        bounds: geometry.bounds,
-        centroid: { x: sumX / cells.length, y: sumY / cells.length },
-        loops: geometry.loops
-      });
-      regionId += 1;
     }
-    state.shapeBuilderCache = { key, cell, ox, oy, cols, rows, masks, regionMap, regions, shapeIds: shapes.map(shape => shape.id) };
+
+    state.shapeBuilderCache = {
+      key,
+      regions,
+      shapeIds: shapes.map(s => s.id),
+      bounds: { x1, y1, x2, y2 }
+    };
     return state.shapeBuilderCache;
   }
 
   function shapeBuilderRegionAtPoint(p) {
     const cache = getShapeBuilderCache();
     if (!cache) return null;
-    const col = Math.floor((p.x - cache.ox) / cache.cell);
-    const row = Math.floor((p.y - cache.oy) / cache.cell);
-    if (col < 0 || row < 0 || col >= cache.cols || row >= cache.rows) return null;
-    const id = cache.regionMap[row * cache.cols + col];
-    return id >= 0 ? id : null;
-  }
-
-  function buildCompoundGeometry(cells, cols, rows, cell, ox, oy) {
-    const occ = new Uint8Array(cols * rows);
-    cells.forEach(idx => { occ[idx] = 1; });
-    const edges = [];
-    const addEdge = (ax, ay, bx, by) => edges.push({ a: { x: ax, y: ay }, b: { x: bx, y: by } });
-    for (const idx of cells) {
-      const row = Math.floor(idx / cols);
-      const col = idx % cols;
-      const top = row === 0 ? 0 : occ[idx - cols];
-      const right = col === cols - 1 ? 0 : occ[idx + 1];
-      const bottom = row === rows - 1 ? 0 : occ[idx + cols];
-      const left = col === 0 ? 0 : occ[idx - 1];
-      if (!top) addEdge(col, row, col + 1, row);
-      if (!right) addEdge(col + 1, row, col + 1, row + 1);
-      if (!bottom) addEdge(col + 1, row + 1, col, row + 1);
-      if (!left) addEdge(col, row + 1, col, row);
+    // Fast bbox reject, then ray-cast point-in-polygon per region.
+    for (let i = 0; i < cache.regions.length; i++) {
+      const region = cache.regions[i];
+      const b = region.bounds;
+      if (p.x < b.x1 || p.x > b.x2 || p.y < b.y1 || p.y > b.y2) continue;
+      if (multiPolyContains(region.polygon, p.x, p.y)) return region.id;
     }
-    const key = p => `${p.x},${p.y}`;
-    const byStart = new Map();
-    edges.forEach((edge, i) => {
-      const k = key(edge.a);
-      if (!byStart.has(k)) byStart.set(k, []);
-      byStart.get(k).push(i);
-    });
-    const visited = new Uint8Array(edges.length);
-    const loops = [];
-    for (let i = 0; i < edges.length; i++) {
-      if (visited[i]) continue;
-      visited[i] = 1;
-      const start = edges[i];
-      const loop = [start.a, start.b];
-      let current = start.b;
-      let guard = 0;
-      while (key(current) !== key(start.a) && guard < edges.length + 8) {
-        guard += 1;
-        const candidates = byStart.get(key(current)) || [];
-        const nextIndex = candidates.find(idx => !visited[idx]);
-        if (nextIndex == null) break;
-        visited[nextIndex] = 1;
-        const nextEdge = edges[nextIndex];
-        loop.push(nextEdge.b);
-        current = nextEdge.b;
-      }
-      const simplified = simplifyLoop(loop).map(pt => ({ x: ox + pt.x * cell, y: oy + pt.y * cell }));
-      if (simplified.length >= 3) loops.push(simplified);
-    }
-    const bounds = loopsBounds(loops);
-    return { loops, pathData: loopsToPathData(loops, { smooth: true }), bounds };
+    return null;
   }
 
   function simplifyLoop(points) {
@@ -2614,25 +2783,41 @@
     // the second call to rebuild the cache against a different source list.
     const cache = cacheOverride || getShapeBuilderCache();
     if (!cache || !regions.length) return null;
-    const cellSet = new Set();
-    regions.forEach(region => region.cells.forEach(idx => cellSet.add(idx)));
-    const geometry = buildCompoundGeometry([...cellSet], cache.cols, cache.rows, cache.cell, cache.ox, cache.oy);
-    geometry.loops = geometry.loops.map(loop => smoothStairLoop(loop, cache.cell * 2.6, cache.cell < 1 ? 2 : 1)).map(loop => simplifyLoop(loop));
-    geometry.pathData = loopsToPathData(geometry.loops, { smooth: true });
-    geometry.bounds = loopsBounds(geometry.loops);
-    const bounds = geometry.bounds;
+    const pc = polyClippingAvailable() ? window.polygonClipping : null;
+    if (!pc) return null;
+
+    // Exact union of all region polygons — output is the merged outline the
+    // user painted over (or the untouched leftover pieces in the `add` mode
+    // residual branch). No rasterisation, no smoothing, no stair loops.
+    let merged;
+    try {
+      merged = regions[0].polygon;
+      for (let i = 1; i < regions.length; i++) {
+        merged = pc.union(merged, regions[i].polygon);
+      }
+    } catch (err) {
+      return null;
+    }
+    if (multiPolyIsEmpty(merged)) return null;
+
+    const loops = multiPolyToLoops(merged);
+    if (!loops.length) return null;
+    const pathData = loopsToPathData(loops);
+    const bounds = loopsBounds(loops);
+
     const sourceShapes = sourceShapesOverride || cache.shapeIds.map(id => getShape(id)).filter(Boolean);
     const vectorNode = sourceShapes.length === cache.shapeIds.length
       ? buildShapeBuilderVectorNode(regions, sourceShapes)
       : null;
-    const shape = createShape('compound', {
+
+    return createShape('compound', {
       name,
       x: (bounds.x1 + bounds.x2) / 2,
       y: (bounds.y1 + bounds.y2) / 2,
       w: bounds.x2 - bounds.x1,
       h: bounds.y2 - bounds.y1,
-      pathData: geometry.pathData,
-      compoundLoops: geometry.loops,
+      pathData,
+      compoundLoops: loops,
       pathBounds: bounds,
       op: 'add',
       ...(vectorNode ? {
@@ -2641,7 +2826,6 @@
         vectorSource: { engine: 'shape-builder', op: 'build', sourceIds: cache.shapeIds.slice() }
       } : {})
     });
-    return shape;
   }
 
   function buildShapeBuilderVectorNode(regions, sourceShapes) {
@@ -4242,8 +4426,13 @@
         s.id, s.type, s.op || '', s.fillMode || '',
         s.strokeWidth || 0,
         s.x || 0, s.y || 0, s.w || 0, s.h || 0, s.r || 0, s.rotation || 0,
-        s.pathData ? s.pathData.length : 0,
-        s.pathData ? s.pathData : ''
+        // Compact pathData fingerprint: length + prefix + suffix. Avoids
+        // allocating a tens-of-KB string per frame for compound shapes whose
+        // pathData is regenerated on every drag move. The prefix/suffix
+        // captures the coordinate span so translations always change it.
+        s.pathData
+          ? s.pathData.length + ':' + s.pathData.slice(0, 48) + ':' + s.pathData.slice(-48)
+          : 0
       );
     }
     const f = getExplicitFrame();
@@ -4547,7 +4736,24 @@
     if (ui.stateRail) ui.stateRail.innerHTML = '';
   }
 
+  // Signature caches — panels only rebuild when their input actually changed.
+  // Without this we were re-running 4× innerHTML assignments + event wiring on
+  // every rAF frame during drag (60–120 Hz), which was the main source of lag.
+  let _objListSig = null;
+  let _contextPanelSig = null;
+  let _selectionPanelSig = null;
+  let _constraintSig = null;
+  function invalidatePanelCaches() {
+    _objListSig = _contextPanelSig = _selectionPanelSig = _constraintSig = null;
+  }
+
   function renderPanels() {
+    // Each of these four heavy panels computes a cheap signature of the
+    // state it actually displays and bails out early when that signature
+    // matches the last rendered one. A plain shape move produces zero
+    // signature changes, so rAF frames during a drag become essentially
+    // free instead of rebuilding ~4 innerHTML trees and re-wiring dozens
+    // of click handlers per frame.
     renderObjectList();
     renderContextPanel();
     renderSelectionPanel();
@@ -4597,21 +4803,35 @@
     const selectionSupportsFill = state.selection.map(getShape).filter(shapeSupportsFillMode);
     let effectiveMode = state.drawMode;
     let effectiveWidth = state.strokeWidth;
+    let mixedMode = false;
     if (selectionSupportsFill.length) {
       const firstMode = selectionSupportsFill[0].fillMode || 'fill';
       const allSame = selectionSupportsFill.every(s => (s.fillMode || 'fill') === firstMode);
-      if (allSame) effectiveMode = firstMode;
+      if (allSame) {
+        effectiveMode = firstMode;
+      } else {
+        mixedMode = true;
+      }
       const firstWidth = Math.max(0.5, selectionSupportsFill[0].strokeWidth || 4);
       const allSameW = selectionSupportsFill.every(s => Math.max(0.5, s.strokeWidth || 4) === firstWidth);
       if (allSameW) effectiveWidth = firstWidth;
     }
-    if (ui.drawModeFillBtn) ui.drawModeFillBtn.classList.toggle('active', effectiveMode === 'fill');
-    if (ui.drawModeStrokeBtn) ui.drawModeStrokeBtn.classList.toggle('active', effectiveMode === 'stroke');
+    if (ui.drawModeFillBtn) {
+      ui.drawModeFillBtn.classList.toggle('active', !mixedMode && effectiveMode === 'fill');
+      ui.drawModeFillBtn.classList.toggle('mixed', mixedMode);
+    }
+    if (ui.drawModeStrokeBtn) {
+      ui.drawModeStrokeBtn.classList.toggle('active', !mixedMode && effectiveMode === 'stroke');
+      ui.drawModeStrokeBtn.classList.toggle('mixed', mixedMode);
+    }
     if (ui.strokeWidthInput && document.activeElement !== ui.strokeWidthInput) {
       ui.strokeWidthInput.value = String(effectiveWidth);
     }
     const strokeRow = document.querySelector('.stroke-width-row');
-    if (strokeRow) strokeRow.classList.toggle('disabled', effectiveMode !== 'stroke');
+    // stroke-width input stays enabled if ANY selected shape uses stroke so
+    // the user can tweak width for mixed selections without first unifying.
+    const anyStrokeSelected = selectionSupportsFill.some(s => (s.fillMode || 'fill') === 'stroke');
+    if (strokeRow) strokeRow.classList.toggle('disabled', !anyStrokeSelected && effectiveMode !== 'stroke');
     if (ui.objectSnapBtn) ui.objectSnapBtn.classList.toggle('active', state.objectSnap);
     if (ui.gridSizeLabel) ui.gridSizeLabel.textContent = `${state.grid} px`;
     if (ui.boardModeLabel) ui.boardModeLabel.textContent = `${state.showGrid ? 'grid' : 'plain'} · ${state.grid}`;
@@ -4623,6 +4843,26 @@
   function renderContextPanel() {
     const selectedShapes = state.selection.map(getShape).filter(Boolean);
     const totalRelations = state.links.mirror.length + state.links.radius.length + state.links.center.length + state.links.axis.length + state.shapes.filter(s => s.type === 'tangent').length;
+    // Signature captures everything actually rendered in the context panel.
+    // Includes bounds so resize updates live; position is included only for
+    // the single-selection case (chip shows center coordinates).
+    let sig = 'n=' + selectedShapes.length + ';shp=' + state.shapes.length + ';tool=' + state.tool + ';rel=' + totalRelations;
+    if (selectedShapes.length === 1) {
+      const s = selectedShapes[0];
+      const b = getBounds(s);
+      sig += ';s=' + s.id + ':' + s.type + ':' + (s.sourceId || '') + ':'
+        + round(s.x) + ',' + round(s.y) + ':'
+        + round(b.x2 - b.x1) + 'x' + round(b.y2 - b.y1);
+      if (s.type === 'circle' || s.type === 'arc') sig += ':r=' + round(s.r);
+      if (s.type === 'tangent') sig += ':' + s.mode + ':' + s.side;
+    } else if (selectedShapes.length > 1) {
+      const box = getCombinedBounds(selectedShapes);
+      sig += ';box=' + round(box.x2 - box.x1) + 'x' + round(box.y2 - box.y1)
+        + ';ids=' + state.selection.join(',')
+        + ';tan=' + selectedShapes.filter(s => s.type === 'tangent').length;
+    }
+    if (sig === _contextPanelSig) return;
+    _contextPanelSig = sig;
     if (!selectedShapes.length) {
       ui.contextBody.innerHTML = `
         <div class="empty-stack">
@@ -4724,17 +4964,72 @@
   }
 
   function renderObjectList() {
+    // Signature covers everything the list actually renders. x/y position is
+    // intentionally excluded — the list doesn't show it, so dragging a shape
+    // around no longer forces a full rebuild every frame.
+    let sig = '';
+    for (let i = 0; i < state.shapes.length; i++) {
+      const s = state.shapes[i];
+      sig += s.id + ':' + s.name + ':' + s.type + ':'
+        + round(s.w || 0) + ':' + round(s.h || 0) + ':' + round(s.r || 0) + ':'
+        + (s.op || '') + ':' + (s.sourceId || '') + ':' + (s.fillMode || 'fill') + ':'
+        + round(s.strokeWidth || 0) + ':' + (s.visible ? 1 : 0) + ':'
+        + (s.constructionOnly ? 1 : 0) + '|';
+    }
+    sig += '#' + state.selection.join(',');
+    if (sig === _objListSig) return;
+    _objListSig = sig;
     ui.objectList.innerHTML = '';
     state.shapes.forEach(shape => {
       const item = document.createElement('div');
       item.className = 'object-item' + (state.selection.includes(shape.id) ? ' active' : '');
-      item.innerHTML = `<div><strong>${shape.name}</strong></div>
-        <div class="object-meta mono">${shape.type} · ${shape.type === 'circle' ? `r ${round(shape.r)}` : shape.type === 'compound' ? `w ${round(shape.w)} · h ${round(shape.h)} · built` : `w ${round(shape.w)} · h ${round(shape.h)}`} ${shape.op ? '· ' + shape.op : ''}${shape.sourceId ? ' · mirrored' : ''}</div>`;
+      const meta = shape.type === 'circle'
+        ? `r ${round(shape.r)}`
+        : shape.type === 'compound'
+          ? `w ${round(shape.w)} · h ${round(shape.h)} · built`
+          : `w ${round(shape.w)} · h ${round(shape.h)}`;
+      const supportsFill = shapeSupportsFillMode(shape);
+      const currentMode = supportsFill ? (shape.fillMode || 'fill') : null;
+      const toggleHtml = supportsFill
+        ? `<div class="object-fill-toggle" data-shape-id="${shape.id}" role="group" aria-label="Fill mode for ${shape.name}">
+             <button type="button" data-mode="fill" class="${currentMode === 'fill' ? 'active' : ''}" title="Fill — solid"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3" fill="currentColor"/></svg></button>
+             <button type="button" data-mode="stroke" class="${currentMode === 'stroke' ? 'active' : ''}" title="Outline only"><svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
+           </div>`
+        : '';
+      item.innerHTML = `
+        <div class="object-item-text">
+          <strong>${shape.name}</strong>
+          <div class="object-meta mono">${shape.type} · ${meta}${shape.op ? ' · ' + shape.op : ''}${shape.sourceId ? ' · mirrored' : ''}${currentMode === 'stroke' ? ` · ${round(shape.strokeWidth || 4)}px` : ''}</div>
+        </div>
+        ${toggleHtml}`;
+
+      // row click → (multi-)select — but only when the click did NOT land on
+      // the fill/stroke toggle (those buttons have their own handler below)
       item.addEventListener('click', e => {
+        if (e.target.closest('.object-fill-toggle')) return;
         if (e.shiftKey) toggleSelection(shape.id);
         else state.selection = [shape.id];
         render();
       });
+
+      const toggle = item.querySelector('.object-fill-toggle');
+      if (toggle) {
+        toggle.querySelectorAll('button').forEach(btn => {
+          btn.addEventListener('click', ev => {
+            ev.stopPropagation();
+            const mode = btn.dataset.mode;
+            if (mode !== 'fill' && mode !== 'stroke') return;
+            // Per-shape edit: does NOT touch selection, does NOT touch any
+            // other selected shapes — this is exactly the "individually
+            // decide per shape" behaviour the user asked for.
+            shape.fillMode = mode;
+            if (mode === 'stroke' && !shape.strokeWidth) shape.strokeWidth = state.strokeWidth || 4;
+            invalidateShapeBuilder();
+            render();
+          });
+        });
+      }
+
       ui.objectList.appendChild(item);
     });
   }
@@ -4769,6 +5064,38 @@
   }
 
   function renderSelectionPanel() {
+    // Signature covers every property the inspector surfaces. Heavy fields
+    // like pathData / compoundLoops are excluded — they're captured via their
+    // w/h/x/y derivatives plus the shape id. Keeps focused input state intact
+    // because we bail early instead of rebuilding innerHTML.
+    let sig = 'n=' + state.selection.length;
+    if (state.selection.length === 1) {
+      const s = getShape(state.selection[0]);
+      if (s) {
+        sig += ';' + s.id + ':' + s.type + ':' + s.name + ':'
+          + round(s.x) + ',' + round(s.y) + ':'
+          + round(s.w || 0) + 'x' + round(s.h || 0) + ':'
+          + round(s.r || 0) + ':'
+          + round(s.rotation || 0) + ':'
+          + round(s.x2 || 0) + ',' + round(s.y2 || 0) + ':'
+          + round(s.start || 0) + ':' + round(s.end || 0) + ':'
+          + (s.mode || '') + ':' + (s.side || 0) + ':'
+          + (s.aId || '') + ':' + (s.bId || '') + ':'
+          + (s.sourceId || '') + ':' + (s.fillMode || 'fill') + ':'
+          + round(s.strokeWidth || 0) + ':'
+          + (s.compoundLoops ? s.compoundLoops.length : 0);
+      }
+    } else {
+      const sel = state.selection.map(getShape).filter(Boolean);
+      if (sel.length) {
+        const box = getCombinedBounds(sel);
+        sig += ';ids=' + state.selection.join(',')
+          + ';box=' + round(box.x2 - box.x1) + 'x' + round(box.y2 - box.y1);
+      }
+    }
+    sig += ';rel=' + countRelationsForSelection(state.selection);
+    if (sig === _selectionPanelSig) return;
+    _selectionPanelSig = sig;
     if (!state.selection.length) {
       if (ui.geometryTitle) ui.geometryTitle.textContent = 'Geometry';
       ui.selectionBody.innerHTML = '<div class="small">No selection</div>';
@@ -4989,6 +5316,17 @@
   }
 
   function renderConstraintSummary() {
+    // Relations only change on explicit actions (link/unlink, mirror, tangent
+    // create/delete), so we can fingerprint the whole dependency graph plus
+    // the current selection scope and skip the DOM rebuild when unchanged.
+    const selSig = state.selection.join(',');
+    const sig = selSig + '|m=' + state.links.mirror.map(l => l.sourceId + '>' + l.targetId + ':' + l.axis).join(';')
+      + '|r=' + state.links.radius.map(l => l.sourceId + '>' + l.targetId).join(';')
+      + '|c=' + state.links.center.map(l => l.sourceId + '>' + l.targetId).join(';')
+      + '|a=' + state.links.axis.map(l => l.targetId + ':' + l.axis).join(';')
+      + '|t=' + state.shapes.filter(s => s.type === 'tangent').map(s => s.id + ':' + s.aId + '>' + s.bId + ':' + s.mode + s.side).join(';');
+    if (sig === _constraintSig) return;
+    _constraintSig = sig;
     const parts = [];
     const selectionIds = new Set(state.selection);
     const tangentShapes = state.shapes.filter(s => s.type === 'tangent').filter(s => {
