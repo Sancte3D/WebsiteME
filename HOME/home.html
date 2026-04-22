@@ -10,6 +10,9 @@
   <meta property="og:title" content="Persancte Studio" />
   <meta property="og:description" content="Distinct products, interfaces and visual identities for forward-thinking brands." />
   <meta property="og:type" content="website" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="./persancte-ui.css" />
 </head>
 <body>
@@ -18,8 +21,19 @@
     <header class="site-header">
       <div class="header-shell">
         <div class="brand-block">
-          <div class="micro-label">Design Studio</div>
-          <div class="brand-name">Persancte Studio</div>
+          <a class="brand-link" href="#top">
+            <!-- Replace inner SVG (or use <img class="brand-icon-img" src="…" alt="">) when the mark is ready -->
+            <span class="brand-icon" aria-hidden="true">
+              <svg class="brand-icon-svg" width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" focusable="false">
+                <rect x="3" y="3" width="26" height="26" rx="7" stroke="currentColor" stroke-opacity="0.28" stroke-width="1.4" />
+                <rect x="10" y="10" width="12" height="12" rx="2.5" fill="currentColor" fill-opacity="0.1" />
+              </svg>
+            </span>
+            <span class="brand-text">
+              <span class="micro-label">Design Studio</span>
+              <span class="brand-name">Persancte Studio</span>
+            </span>
+          </a>
         </div>
 
         <nav id="primary-nav" class="header-nav" aria-label="Primary">
