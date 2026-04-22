@@ -1,0 +1,1530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Help Me Help You Tool v25</title>
+  <style>
+    :root {
+      --bg: #efefe9;
+      --bg-deep: #e3e1d8;
+      --panel: rgba(255,255,255,0.78);
+      --panel-strong: rgba(255,255,255,0.92);
+      --sheet: #fbfaf4;
+      --sheet-strong: #fffdf7;
+      --text: #111111;
+      --muted: rgba(17,17,17,0.58);
+      --placeholder: rgba(17,17,17,0.30);
+      --line: rgba(16,16,16,0.10);
+      --line-strong: rgba(16,16,16,0.18);
+      --accent: #111111;
+      --shadow: 0 24px 54px rgba(0,0,0,0.08);
+      --sheet-shadow: 0 28px 60px rgba(0,0,0,0.12);
+      --radius-xl: 24px;
+      --radius-lg: 18px;
+      --radius-md: 16px;
+      --radius-sm: 14px;
+      --radius-xs: 12px;
+      --gap-xs: 8px;
+      --gap-sm: 12px;
+      --gap-md: 14px;
+      --gap-lg: 18px;
+      --gap-xl: 24px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at top left, #f9f9f5 0%, var(--bg) 56%, var(--bg-deep) 100%);
+      overflow-wrap: break-word;
+      word-break: break-word;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.18;
+      background-image:
+        linear-gradient(rgba(0,0,0,0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,0,0,0.035) 1px, transparent 1px);
+      background-size: 32px 32px;
+      mask-image: radial-gradient(circle at center, black 24%, transparent 92%);
+    }
+
+    .app {
+      position: relative;
+      width: min(1040px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 48px;
+    }
+
+    .stack {
+      display: grid;
+      gap: var(--gap-lg);
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero {
+      display: grid;
+      gap: 10px;
+      padding: 6px 2px;
+    }
+
+    .kicker {
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .title-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: start;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 42px);
+      line-height: 0.98;
+      letter-spacing: -0.05em;
+      font-weight: 600;
+    }
+
+    .meta-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+      min-width: 0;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: var(--panel-strong);
+      color: var(--muted);
+      box-shadow: var(--shadow);
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .pill strong {
+      color: var(--text);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      letter-spacing: 0.06em;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .form-card {
+      padding: 18px;
+      display: grid;
+      gap: var(--gap-lg);
+    }
+
+    .form-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .form-head-copy {
+      display: grid;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .form-head-copy h2,
+    .receipt-head h2 {
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      font-weight: 600;
+    }
+
+    .form-head-copy p,
+    .receipt-head p {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.45;
+      color: var(--muted);
+    }
+
+    .identity-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: var(--panel-strong);
+      min-width: 0;
+      max-width: 100%;
+    }
+
+    .identity-mark-wrap {
+      flex: 0 0 auto;
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      background: rgba(17,17,17,0.05);
+      border: 1px solid var(--line);
+    }
+
+    .identity-mark {
+      width: 24px;
+      height: 24px;
+      display: block;
+    }
+
+    .identity-copy {
+      display: grid;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .identity-copy span {
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .identity-copy strong {
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    form {
+      display: grid;
+      gap: var(--gap-lg);
+    }
+
+    .section {
+      display: grid;
+      gap: var(--gap-sm);
+      min-width: 0;
+    }
+
+    .section-label {
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+      min-width: 0;
+      min-height: 0;
+    }
+
+    .field.full { grid-column: 1 / -1; }
+
+    label {
+      display: block;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    input,
+    textarea,
+    button {
+      font: inherit;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      min-width: 0;
+      border: 1px solid var(--line);
+      background: var(--panel-strong);
+      color: var(--text);
+      border-radius: var(--radius-sm);
+      padding: 13px 14px;
+      outline: none;
+      transition: border-color 140ms ease, background 140ms ease, box-shadow 140ms ease;
+      overflow-wrap: break-word;
+      word-break: break-word;
+      min-height: 48px;
+      height: auto;
+    }
+
+    textarea {
+      resize: none;
+      min-height: 124px;
+      line-height: 1.5;
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+      color: var(--placeholder);
+    }
+
+    input:focus,
+    textarea:focus {
+      background: #fff;
+      border-color: var(--line-strong);
+      box-shadow: 0 0 0 3px rgba(17,17,17,0.04);
+    }
+
+    .type-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .type-option {
+      width: 100%;
+      min-width: 0;
+      border: 1px solid var(--line);
+      background: var(--panel-strong);
+      border-radius: 18px;
+      padding: 14px;
+      display: grid;
+      grid-template-columns: 18px minmax(0, 1fr);
+      gap: 12px;
+      align-items: start;
+      cursor: pointer;
+      transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+      text-align: left;
+    }
+
+    .type-option:hover {
+      transform: translateY(-1px);
+      border-color: var(--line-strong);
+      background: #fff;
+    }
+
+    .type-option.active {
+      background: rgba(17,17,17,0.95);
+      border-color: transparent;
+      color: #fff;
+    }
+
+    .type-option-dot {
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      border: 1px solid var(--line-strong);
+      background: rgba(17,17,17,0.04);
+      position: relative;
+      margin-top: 2px;
+    }
+
+    .type-option.active .type-option-dot {
+      border-color: rgba(255,255,255,0.35);
+      background: rgba(255,255,255,0.08);
+    }
+
+    .type-option.active .type-option-dot::after {
+      content: "";
+      position: absolute;
+      inset: 4px;
+      border-radius: 999px;
+      background: #fff;
+    }
+
+    .type-option-copy {
+      display: grid;
+      gap: 3px;
+      min-width: 0;
+    }
+
+    .type-option-copy strong {
+      font-size: 14px;
+      line-height: 1.25;
+      font-weight: 600;
+    }
+
+    .type-option-copy span {
+      font-size: 12px;
+      line-height: 1.4;
+      color: var(--muted);
+    }
+
+    .type-option.active .type-option-copy span,
+    .type-option.active .type-option-copy strong {
+      color: #fff;
+    }
+
+    .actions {
+      display: grid;
+      gap: 10px;
+      padding-top: 4px;
+    }
+
+    .primary-button,
+    .secondary-button {
+      appearance: none;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 12px 16px;
+      min-height: 48px;
+      background: var(--panel-strong);
+      color: var(--text);
+      cursor: pointer;
+      transition: transform 140ms ease, border-color 140ms ease, background 140ms ease, opacity 140ms ease;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .primary-button:hover,
+    .secondary-button:hover {
+      transform: translateY(-1px);
+      border-color: var(--line-strong);
+      background: #fff;
+    }
+
+    .primary-button {
+      background: var(--accent);
+      color: #fff;
+      border-color: transparent;
+    }
+
+    .primary-button:hover {
+      background: rgba(17,17,17,0.96);
+    }
+
+    .button-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .receipt-shell {
+      display: none;
+      gap: var(--gap-lg);
+    }
+
+    .receipt-shell.sent {
+      display: grid;
+    }
+
+    .receipt-card {
+      background: linear-gradient(180deg, var(--sheet) 0%, var(--sheet-strong) 100%);
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 28px;
+      box-shadow: var(--sheet-shadow);
+      padding: 20px;
+      display: grid;
+      gap: 18px;
+      min-width: 0;
+    }
+
+    .receipt-head {
+      display: grid;
+      gap: 10px;
+      padding-bottom: 2px;
+      border-bottom: 1px solid rgba(0,0,0,0.08);
+    }
+
+    .receipt-meta {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .receipt-item,
+    .receipt-block {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+      min-height: 0;
+      padding: 12px 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(0,0,0,0.08);
+      background: rgba(255,255,255,0.66);
+    }
+
+    .receipt-item span,
+    .receipt-block span {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .receipt-item strong,
+    .receipt-block strong {
+      font-size: 14px;
+      line-height: 1.45;
+      font-weight: 500;
+    }
+
+    .receipt-block {
+      background: rgba(255,255,255,0.58);
+    }
+
+    .receipt-body {
+      display: grid;
+      gap: 12px;
+    }
+
+    .receipt-identity {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 12px;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .receipt-actions {
+      display: none;
+      gap: 10px;
+      justify-content: flex-start;
+      align-items: center;
+    }
+
+    .receipt-actions .primary-button {
+      width: auto;
+      min-width: 148px;
+      flex: 0 0 auto;
+      box-shadow: var(--shadow);
+    }
+
+    .receipt-actions.sent {
+      display: flex;
+    }
+
+    .divider {
+      height: 1px;
+      background: rgba(0,0,0,0.08);
+    }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 900px) {
+      .app {
+        width: min(100%, calc(100% - 24px));
+        padding-top: 20px;
+      }
+
+      .title-row,
+      .form-head {
+        grid-template-columns: 1fr;
+      }
+
+      .meta-pills,
+      .identity-chip {
+        justify-self: start;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .field-grid,
+      .receipt-meta,
+      .button-row {
+        grid-template-columns: 1fr;
+      }
+
+      .form-card,
+      .receipt-card {
+        padding: 16px;
+      }
+
+      .app {
+        width: calc(100% - 20px);
+      }
+
+      .pill {
+        white-space: normal;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <div class="stack">
+      <header class="hero">
+        <div class="kicker">Request tool</div>
+        <div class="title-row">
+          <h1>Help me help you</h1>
+          <div class="meta-pills">
+            <div class="pill"><strong>Ref</strong><span id="liveRef" class="mono">HMHY-000000</span></div>
+          </div>
+        </div>
+      </header>
+
+      <section class="card form-card" aria-labelledby="requestTitle">
+        <div class="form-head">
+          <div class="form-head-copy">
+            <div class="kicker">Request</div>
+            <h2 id="requestTitle">Fill out the request</h2>
+            <p>Send when everything is ready. The document appears below for your documentation.</p>
+          </div>
+          <div class="identity-chip" aria-label="Project identity">
+            <div class="identity-mark-wrap">
+              <svg id="liveIdentity" class="identity-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true"></svg>
+            </div>
+            <div class="identity-copy">
+              <span>Project identity</span>
+              <strong id="liveIdentityLabel">Untitled request</strong>
+            </div>
+          </div>
+        </div>
+
+        <form id="requestForm" novalidate>
+          <div class="section">
+            <div class="section-label">Basics</div>
+            <div class="field-grid">
+              <div class="field">
+                <label for="nameInput">Name</label>
+                <input id="nameInput" name="name" type="text" placeholder="Type here..." maxlength="120" />
+              </div>
+              <div class="field">
+                <label for="companyInput">Company</label>
+                <input id="companyInput" name="company" type="text" placeholder="Type here..." maxlength="140" />
+              </div>
+              <div class="field full">
+                <label for="contactInput">Contact</label>
+                <input id="contactInput" name="contact" type="text" placeholder="Type here..." maxlength="180" />
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-label">Request type</div>
+            <div class="type-list" id="typeList">
+              <button class="type-option" type="button" data-type="3D / Visual">
+                <div class="type-option-dot"></div>
+                <div class="type-option-copy">
+                  <strong>3D / Visual</strong>
+                  <span>Assets, renders, textures, scenes, motion or visual development.</span>
+                </div>
+              </button>
+              <button class="type-option" type="button" data-type="Graphic / Layout">
+                <div class="type-option-dot"></div>
+                <div class="type-option-copy">
+                  <strong>Graphic / Layout</strong>
+                  <span>Graphic systems, editorial layouts, branding, decks or presentation design.</span>
+                </div>
+              </button>
+              <button class="type-option" type="button" data-type="Product / Object">
+                <div class="type-option-dot"></div>
+                <div class="type-option-copy">
+                  <strong>Product / Object</strong>
+                  <span>Concepts, object proposals, industrial design directions or material studies.</span>
+                </div>
+              </button>
+              <button class="type-option" type="button" data-type="Custom">
+                <div class="type-option-dot"></div>
+                <div class="type-option-copy">
+                  <strong>Custom</strong>
+                  <span>Anything outside the categories above.</span>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-label">Project details</div>
+            <div class="field-grid">
+              <div class="field full">
+                <label for="titleInput">Project title</label>
+                <input id="titleInput" name="title" type="text" placeholder="Type here..." maxlength="220" />
+              </div>
+              <div class="field">
+                <label for="deadlineInput">Deadline</label>
+                <input id="deadlineInput" name="deadline" type="text" placeholder="Type here..." maxlength="80" />
+              </div>
+              <div class="field">
+                <label for="budgetInput">Budget</label>
+                <input id="budgetInput" name="budget" type="text" placeholder="Type here..." maxlength="120" />
+              </div>
+              <div class="field full">
+                <label for="summaryInput">Request summary</label>
+                <textarea id="summaryInput" name="summary" placeholder="Type here..."></textarea>
+              </div>
+              <div class="field full">
+                <label for="notesInput">Notes</label>
+                <textarea id="notesInput" name="notes" placeholder="Type here..."></textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button id="sendButton" class="primary-button" type="submit">Send request</button>
+            <div class="hint">After send, a document is created below for your documentation.</div>
+          </div>
+        </form>
+      </section>
+
+      <section id="receiptShell" class="receipt-shell" aria-live="polite">
+        <article class="receipt-card" id="receiptCard">
+          <div class="receipt-head">
+            <div class="kicker">Request sent</div>
+            <h2>For your documentation</h2>
+            <p id="receiptStatusText">Your request has been sent. We will review it and contact you using the details you provided. The document below is a copy for your own documentation.</p>
+          </div>
+
+          <div class="receipt-meta">
+            <div class="receipt-item">
+              <span>Reference</span>
+              <strong id="receiptRef" class="mono">HMHY-000000</strong>
+            </div>
+            <div class="receipt-item">
+              <span>Submitted</span>
+              <strong id="receiptDate">—</strong>
+            </div>
+          </div>
+
+          <div class="receipt-body">
+            <div class="receipt-item">
+              <span>Name</span>
+              <strong id="receiptName">—</strong>
+            </div>
+            <div class="receipt-item">
+              <span>Company</span>
+              <strong id="receiptCompany">—</strong>
+            </div>
+            <div class="receipt-item">
+              <span>Contact</span>
+              <strong id="receiptContact">—</strong>
+            </div>
+            <div class="receipt-item">
+              <span>Request type</span>
+              <strong id="receiptType">—</strong>
+            </div>
+            <div class="receipt-item">
+              <span>Project title</span>
+              <strong id="receiptTitle">—</strong>
+            </div>
+            <div class="receipt-item">
+              <span>Deadline</span>
+              <strong id="receiptDeadline">—</strong>
+            </div>
+            <div class="receipt-item hidden" id="receiptBudgetWrap">
+              <span>Budget</span>
+              <strong id="receiptBudget">—</strong>
+            </div>
+            <div class="receipt-block">
+              <span>Request summary</span>
+              <strong id="receiptSummary">—</strong>
+            </div>
+            <div class="receipt-block hidden" id="receiptNotesWrap">
+              <span>Notes</span>
+              <strong id="receiptNotes">—</strong>
+            </div>
+            <div class="divider"></div>
+            <div class="receipt-item receipt-identity">
+              <div class="identity-mark-wrap">
+                <svg id="receiptIdentity" class="identity-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true"></svg>
+              </div>
+              <div>
+                <span>Project identity</span>
+                <strong id="receiptIdentityLabel">Untitled request</strong>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <div id="receiptActions" class="receipt-actions">
+          <button id="savePdfButton" class="primary-button" type="button">Save PDF</button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    (() => {
+      const form = document.getElementById('requestForm');
+      const sendButton = document.getElementById('sendButton');
+      const receiptShell = document.getElementById('receiptShell');
+      const receiptActions = document.getElementById('receiptActions');
+      const typeButtons = [...document.querySelectorAll('.type-option')];
+      const fields = {
+        name: document.getElementById('nameInput'),
+        company: document.getElementById('companyInput'),
+        contact: document.getElementById('contactInput'),
+        title: document.getElementById('titleInput'),
+        deadline: document.getElementById('deadlineInput'),
+        budget: document.getElementById('budgetInput'),
+        summary: document.getElementById('summaryInput'),
+        notes: document.getElementById('notesInput')
+      };
+
+      const liveRef = document.getElementById('liveRef');
+      const liveIdentity = document.getElementById('liveIdentity');
+      const liveIdentityLabel = document.getElementById('liveIdentityLabel');
+
+      const receiptRef = document.getElementById('receiptRef');
+      const receiptDate = document.getElementById('receiptDate');
+      const receiptName = document.getElementById('receiptName');
+      const receiptCompany = document.getElementById('receiptCompany');
+      const receiptContact = document.getElementById('receiptContact');
+      const receiptType = document.getElementById('receiptType');
+      const receiptTitle = document.getElementById('receiptTitle');
+      const receiptDeadline = document.getElementById('receiptDeadline');
+      const receiptBudget = document.getElementById('receiptBudget');
+      const receiptBudgetWrap = document.getElementById('receiptBudgetWrap');
+      const receiptSummary = document.getElementById('receiptSummary');
+      const receiptNotes = document.getElementById('receiptNotes');
+      const receiptNotesWrap = document.getElementById('receiptNotesWrap');
+      const receiptIdentity = document.getElementById('receiptIdentity');
+      const receiptIdentityLabel = document.getElementById('receiptIdentityLabel');
+      const receiptStatusText = document.getElementById('receiptStatusText');
+
+      const savePdfButton = document.getElementById('savePdfButton');
+
+      let selectedType = '';
+      let lastSubmittedAt = '';
+
+      typeButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          selectedType = button.dataset.type || '';
+          typeButtons.forEach(item => item.classList.toggle('active', item === button));
+          updateLiveIdentity();
+        });
+      });
+
+      Object.values(fields).forEach(field => {
+        if (field.tagName === 'TEXTAREA') {
+          autoResize(field);
+          field.addEventListener('input', () => autoResize(field));
+        }
+        field.addEventListener('input', updateLiveIdentity);
+      });
+
+      form.addEventListener('submit', event => {
+        event.preventDefault();
+        if (!validate()) return;
+        lastSubmittedAt = formatDateTime(new Date());
+        renderReceipt();
+        sendButton.textContent = 'Update request';
+        receiptShell.classList.add('sent');
+        receiptActions.classList.add('sent');
+        receiptShell.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+
+      savePdfButton.addEventListener('click', downloadPdfDirect);
+
+      updateLiveIdentity();
+
+      function validate() {
+        const missing = [];
+        if (!fields.name.value.trim()) missing.push(fields.name);
+        if (!fields.contact.value.trim()) missing.push(fields.contact);
+        if (!selectedType) missing.push(typeButtons[0]);
+        if (!fields.title.value.trim()) missing.push(fields.title);
+        if (!fields.summary.value.trim()) missing.push(fields.summary);
+
+        document.querySelectorAll('[data-invalid="true"]').forEach(el => {
+          el.dataset.invalid = 'false';
+          el.style.borderColor = '';
+        });
+
+        if (!missing.length) return true;
+
+        missing.forEach(item => {
+          item.dataset.invalid = 'true';
+          item.style.borderColor = 'rgba(150, 0, 0, 0.28)';
+        });
+
+        const first = missing[0];
+        if (first && typeof first.focus === 'function') first.focus();
+        return false;
+      }
+
+      function autoResize(textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = Math.max(textarea.scrollHeight, 124) + 'px';
+      }
+
+      function safeValue(value, fallback = '—') {
+        return value && value.trim() ? value.trim() : fallback;
+      }
+
+      function getReceiptData() {
+        const name = safeValue(fields.name.value, '—');
+        const company = safeValue(fields.company.value, '—');
+        const contact = safeValue(fields.contact.value, '—');
+        const type = selectedType || '—';
+        const title = safeValue(fields.title.value, 'Untitled request');
+        const deadline = safeValue(fields.deadline.value, '—');
+        const budget = safeValue(fields.budget.value, '');
+        const summary = safeValue(fields.summary.value, '—');
+        const notes = safeValue(fields.notes.value, '');
+        const reference = buildReference();
+        const submittedAt = lastSubmittedAt || formatDateTime(new Date());
+        const identityLabel = buildIdentityLabel();
+        const seed = buildSeed();
+        return { name, company, contact, type, title, deadline, budget, summary, notes, reference, submittedAt, identityLabel, seed };
+      }
+
+      function renderReceipt() {
+        const data = getReceiptData();
+        receiptRef.textContent = data.reference;
+        receiptDate.textContent = data.submittedAt;
+        receiptName.textContent = data.name;
+        receiptCompany.textContent = data.company;
+        receiptContact.textContent = data.contact;
+        receiptType.textContent = data.type;
+        receiptTitle.textContent = data.title;
+        receiptDeadline.textContent = data.deadline;
+        receiptSummary.textContent = data.summary;
+        receiptIdentityLabel.textContent = data.identityLabel;
+        receiptStatusText.textContent = 'Your request has been sent. We will review it and contact you using the details you provided. The document below is a copy for your own documentation.';
+
+        if (data.budget) {
+          receiptBudgetWrap.classList.remove('hidden');
+          receiptBudget.textContent = data.budget;
+        } else {
+          receiptBudgetWrap.classList.add('hidden');
+        }
+
+        if (data.notes) {
+          receiptNotesWrap.classList.remove('hidden');
+          receiptNotes.textContent = data.notes;
+        } else {
+          receiptNotesWrap.classList.add('hidden');
+        }
+
+        drawIdentity(receiptIdentity, data.seed);
+      }
+
+      function updateLiveIdentity() {
+        const reference = buildReference();
+        const identityLabel = buildIdentityLabel();
+        const seed = buildSeed();
+        liveRef.textContent = reference;
+        liveIdentityLabel.textContent = identityLabel;
+        drawIdentity(liveIdentity, seed);
+      }
+
+      function buildReference() {
+        const seed = buildSeed();
+        const code = Math.abs(seed).toString(36).toUpperCase().padStart(6, '0').slice(0, 6);
+        return `HMHY-${code}`;
+      }
+
+      function buildIdentityLabel() {
+        const title = fields.title.value.trim();
+        const name = fields.name.value.trim();
+        const company = fields.company.value.trim();
+        if (title) return title;
+        if (name && company) return `${name} / ${company}`;
+        if (name) return name;
+        if (company) return company;
+        return 'Untitled request';
+      }
+
+      function buildSeed() {
+        const joined = [
+          fields.name.value,
+          fields.company.value,
+          fields.contact.value,
+          selectedType,
+          fields.title.value,
+          fields.summary.value,
+          fields.notes.value
+        ].join('|');
+        return hashString(joined || 'hmhy');
+      }
+
+      function hashString(value) {
+        let hash = 2166136261;
+        for (let i = 0; i < value.length; i++) {
+          hash ^= value.charCodeAt(i);
+          hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
+        }
+        return hash | 0;
+      }
+
+      function drawIdentity(svg, seed) {
+        const values = seededValues(seed, 24);
+        const strokeWidth = 1.6;
+        const stroke = '#111111';
+        const soft = 'rgba(17,17,17,0.12)';
+        const pick = index => values[index] || 0.5;
+        const circleR = 2 + Math.round(pick(0) * 3);
+        const x1 = 4 + pick(1) * 6;
+        const y1 = 4 + pick(2) * 6;
+        const x2 = 14 + pick(3) * 6;
+        const y2 = 4 + pick(4) * 6;
+        const x3 = 4 + pick(5) * 6;
+        const y3 = 14 + pick(6) * 6;
+        const x4 = 14 + pick(7) * 6;
+        const y4 = 14 + pick(8) * 6;
+        const rot = Math.round(pick(9) * 45);
+        const dash = pick(10) > 0.5 ? '' : 'stroke-dasharray="2.4 2.4"';
+        const showCircle = pick(11) > 0.32;
+        const showRect = pick(12) > 0.35;
+        const showArc = pick(13) > 0.45;
+        const rectX = 5 + Math.round(pick(14) * 4);
+        const rectY = 5 + Math.round(pick(15) * 4);
+        const rectW = 8 + Math.round(pick(16) * 6);
+        const rectH = 8 + Math.round(pick(17) * 6);
+        const arcSweep = pick(18) > 0.5 ? 1 : 0;
+        const arcEndX = 17 + Math.round(pick(19) * 2);
+        const arcEndY = 10 + Math.round(pick(20) * 6);
+
+        svg.innerHTML = `
+          <rect x="1.5" y="1.5" width="21" height="21" rx="6" fill="none" stroke="${soft}" />
+          <g transform="rotate(${rot} 12 12)" stroke="${stroke}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round" fill="none">
+            <path d="M ${x1.toFixed(1)} ${y1.toFixed(1)} L ${x4.toFixed(1)} ${y4.toFixed(1)}" ${dash}></path>
+            <path d="M ${x2.toFixed(1)} ${y2.toFixed(1)} L ${x3.toFixed(1)} ${y3.toFixed(1)}"></path>
+            ${showRect ? `<rect x="${rectX}" y="${rectY}" width="${rectW}" height="${rectH}" rx="2"></rect>` : ''}
+            ${showCircle ? `<circle cx="12" cy="12" r="${circleR}"></circle>` : ''}
+            ${showArc ? `<path d="M 6 8 A 6 6 0 0 ${arcSweep} ${arcEndX} ${arcEndY}"></path>` : ''}
+          </g>
+        `;
+      }
+
+      function seededValues(seed, count) {
+        let value = Math.abs(seed) + 1;
+        const arr = [];
+        for (let i = 0; i < count; i++) {
+          value = (value * 1664525 + 1013904223) % 4294967296;
+          arr.push((value >>> 0) / 4294967295);
+        }
+        return arr;
+      }
+
+      function formatDateTime(date) {
+        return new Intl.DateTimeFormat(undefined, {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        }).format(date);
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function makeLines(value) {
+        return escapeHtml(value).replace(/\n/g, '<br>');
+      }
+
+
+      function sanitizeFilename(value) {
+        return String(value || 'request-document')
+          .toLowerCase()
+          .replace(/[^a-z0-9\-_.]+/g, '-')
+          .replace(/-+/g, '-')
+          .replace(/^-|-$/g, '') || 'request-document';
+      }
+
+      function toPdfHexString(value) {
+        let hex = '<';
+        const text = String(value ?? '');
+        for (let i = 0; i < text.length; i++) {
+          const code = text.charCodeAt(i);
+          const byte = code <= 255 ? code : 63;
+          hex += byte.toString(16).padStart(2, '0').toUpperCase();
+        }
+        return hex + '>';
+      }
+
+      function concatUint8(arrays) {
+        const total = arrays.reduce((sum, arr) => sum + arr.length, 0);
+        const out = new Uint8Array(total);
+        let offset = 0;
+        arrays.forEach(arr => {
+          out.set(arr, offset);
+          offset += arr.length;
+        });
+        return out;
+      }
+
+      function createPdfFromObjects(objects) {
+        const encoder = new TextEncoder();
+        const header = encoder.encode('%PDF-1.4\n%\xFF\xFF\xFF\xFF\n');
+        let size = header.length;
+        const offsets = [0];
+        objects.forEach(obj => {
+          offsets.push(size);
+          size += obj.length;
+        });
+        const xrefStart = size;
+        let xref = `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+        for (let i = 1; i <= objects.length; i++) {
+          xref += `${String(offsets[i]).padStart(10, '0')} 00000 n \n`;
+        }
+        const trailer = encoder.encode(`trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF`);
+        return new Blob([header, ...objects, trailer], { type: 'application/pdf' });
+      }
+
+      function downloadBlob(blob, filename) {
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1200);
+      }
+
+      function wrapPdfLines(value, maxChars) {
+        const source = String(value ?? '').replace(/\r/g, '');
+        const paragraphs = source.split('\n');
+        const lines = [];
+        paragraphs.forEach(paragraph => {
+          const words = paragraph.split(/\s+/).filter(Boolean);
+          if (!words.length) {
+            lines.push(' ');
+            return;
+          }
+          let current = '';
+          words.forEach(word => {
+            if (word.length > maxChars) {
+              if (current) {
+                lines.push(current);
+                current = '';
+              }
+              for (let i = 0; i < word.length; i += maxChars) {
+                lines.push(word.slice(i, i + maxChars));
+              }
+              return;
+            }
+            const next = current ? `${current} ${word}` : word;
+            if (next.length <= maxChars) current = next;
+            else {
+              if (current) lines.push(current);
+              current = word;
+            }
+          });
+          if (current) lines.push(current);
+        });
+        return lines.length ? lines : ['—'];
+      }
+
+      function createRequestPdfBlob(data) {
+        const encoder = new TextEncoder();
+        const pageW = 595.28;
+        const pageH = 841.89;
+        const margin = 52;
+        const contentW = pageW - margin * 2;
+        const headerReserve = 88;
+        const footerReserve = 28;
+        const pages = [[]];
+        let pageIndex = 0;
+        let y = pageH - margin - headerReserve;
+
+        const currentPage = () => pages[pageIndex];
+        const push = cmd => currentPage().push(cmd);
+        const drawRect = (x, yy, w, h, opts = {}) => {
+          const stroke = opts.stroke ?? 0.88;
+          const fill = opts.fill;
+          const width = opts.lineWidth ?? 1;
+          if (fill != null) {
+            push(`q ${fill.toFixed(3)} g ${stroke.toFixed(3)} G ${width.toFixed(2)} w ${x.toFixed(2)} ${yy.toFixed(2)} ${w.toFixed(2)} ${h.toFixed(2)} re B Q`);
+          } else {
+            push(`${stroke.toFixed(3)} G ${width.toFixed(2)} w ${x.toFixed(2)} ${yy.toFixed(2)} ${w.toFixed(2)} ${h.toFixed(2)} re S`);
+          }
+        };
+        const textLine = (font, size, x, yy, text, gray = 0) => {
+          push(`BT /${font} ${size.toFixed(2)} Tf ${gray.toFixed(3)} g 1 0 0 1 ${x.toFixed(2)} ${yy.toFixed(2)} Tm ${toPdfHexString(text)} Tj ET`);
+        };
+        const rule = yy => push(`0.88 G 1 w ${margin.toFixed(2)} ${yy.toFixed(2)} m ${(pageW - margin).toFixed(2)} ${yy.toFixed(2)} l S`);
+        const ensureSpace = needed => {
+          if (y - needed < margin + footerReserve) {
+            pageIndex += 1;
+            pages.push([]);
+            y = pageH - margin - headerReserve;
+          }
+        };
+        const writeField = (label, value, options = {}) => {
+          const font = options.mono ? 'F3' : (options.boldValue ? 'F2' : 'F1');
+          const size = options.size || 12.5;
+          const lineHeight = options.lineHeight || 16;
+          const maxChars = options.maxChars || (options.mono ? 42 : 82);
+          const lines = wrapPdfLines(value || '—', maxChars);
+          const topPad = 16;
+          const labelGap = 14;
+          const bottomPad = 14;
+          const blockHeight = topPad + labelGap + (lines.length * lineHeight) + bottomPad;
+          ensureSpace(blockHeight + 10);
+          const boxY = y - blockHeight + 4;
+          drawRect(margin, boxY, contentW, blockHeight, { fill: options.fill ?? 0.985, stroke: 0.90 });
+          textLine('F1', 10, margin + 14, y - 14, label.toUpperCase(), 0.55);
+          y -= topPad + labelGap;
+          lines.forEach(line => {
+            textLine(font, size, margin + 14, y, line, 0);
+            y -= lineHeight;
+          });
+          y -= bottomPad - 2;
+        };
+
+        writeField('Reference', data.reference, { mono: true, maxChars: 36, size: 12, fill: 0.978 });
+        writeField('Submitted', data.submittedAt, { maxChars: 44, fill: 0.978 });
+        writeField('Name', data.name, { fill: 0.985 });
+        writeField('Company', data.company, { fill: 0.985 });
+        writeField('Contact', data.contact, { maxChars: 76, fill: 0.985 });
+        writeField('Request type', data.type, { fill: 0.985 });
+        writeField('Project title', data.title, { boldValue: true, size: 13.5, lineHeight: 18, maxChars: 68, fill: 0.978 });
+        writeField('Deadline', data.deadline, { fill: 0.985 });
+        if (data.budget) writeField('Budget', data.budget, { fill: 0.985 });
+        writeField('Request summary', data.summary, { lineHeight: 17, maxChars: 84, fill: 0.992 });
+        if (data.notes) writeField('Notes', data.notes, { lineHeight: 17, maxChars: 84, fill: 0.992 });
+        ensureSpace(56);
+        rule(y - 4);
+        y -= 18;
+        writeField('Project identity', data.identityLabel, { maxChars: 72, fill: 0.978 });
+
+        const headerCommands = (pageNo, totalPages) => {
+          const cmds = [];
+          const add = c => cmds.push(c);
+          const headerTop = pageH - margin + 6;
+          const pillW = 170;
+          const pillH = 28;
+          const pillX = pageW - margin - pillW;
+          const pillY = pageH - margin - 8;
+          add(`BT /F1 10 Tf 0.550 g 1 0 0 1 ${margin.toFixed(2)} ${headerTop.toFixed(2)} Tm ${toPdfHexString('REQUEST DOCUMENT')} Tj ET`);
+          add(`BT /F2 22 Tf 0.000 g 1 0 0 1 ${margin.toFixed(2)} ${(headerTop - 24).toFixed(2)} Tm ${toPdfHexString('Help me help you')} Tj ET`);
+          add(`BT /F1 11 Tf 0.430 g 1 0 0 1 ${margin.toFixed(2)} ${(headerTop - 42).toFixed(2)} Tm ${toPdfHexString('Copy for your documentation')} Tj ET`);
+          add(`q 0.980 g 0.880 G 1 w ${pillX.toFixed(2)} ${pillY.toFixed(2)} ${pillW.toFixed(2)} ${pillH.toFixed(2)} re B Q`);
+          add(`BT /F1 9 Tf 0.550 g 1 0 0 1 ${(pillX + 12).toFixed(2)} ${(pillY + 17).toFixed(2)} Tm ${toPdfHexString('REFERENCE')} Tj ET`);
+          add(`BT /F3 10.5 Tf 0.000 g 1 0 0 1 ${(pillX + 78).toFixed(2)} ${(pillY + 16).toFixed(2)} Tm ${toPdfHexString(data.reference)} Tj ET`);
+          add(`0.88 G 1 w ${margin.toFixed(2)} ${(pageH - margin - 20).toFixed(2)} m ${(pageW - margin).toFixed(2)} ${(pageH - margin - 20).toFixed(2)} l S`);
+          return cmds;
+        };
+
+        const footerCommands = (pageNo, totalPages) => {
+          const cmds = [];
+          const add = c => cmds.push(c);
+          add(`0.90 G 1 w ${margin.toFixed(2)} ${margin.toFixed(2)} m ${(pageW - margin).toFixed(2)} ${margin.toFixed(2)} l S`);
+          add(`BT /F1 9 Tf 0.550 g 1 0 0 1 ${margin.toFixed(2)} ${(margin - 14).toFixed(2)} Tm ${toPdfHexString('Generated from your submitted request')} Tj ET`);
+          add(`BT /F1 9 Tf 0.550 g 1 0 0 1 ${(pageW - margin - 56).toFixed(2)} ${(margin - 14).toFixed(2)} Tm ${toPdfHexString(`PAGE ${pageNo} / ${totalPages}`)} Tj ET`);
+          return cmds;
+        };
+
+        let nextId = 3;
+        const pageRefs = [];
+        pages.forEach(commands => {
+          const pageId = nextId++;
+          const contentId = nextId++;
+          pageRefs.push({ pageId, contentId, commands });
+        });
+        const helveticaId = nextId++;
+        const helveticaBoldId = nextId++;
+        const courierId = nextId++;
+
+        const objects = [];
+        objects.push(encoder.encode('1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n'));
+        objects.push(encoder.encode(`2 0 obj\n<< /Type /Pages /Kids [${pageRefs.map(ref => `${ref.pageId} 0 R`).join(' ')}] /Count ${pageRefs.length} >>\nendobj\n`));
+
+        pageRefs.forEach((ref, index) => {
+          objects.push(encoder.encode(`${ref.pageId} 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageW.toFixed(2)} ${pageH.toFixed(2)}] /Resources << /Font << /F1 ${helveticaId} 0 R /F2 ${helveticaBoldId} 0 R /F3 ${courierId} 0 R >> >> /Contents ${ref.contentId} 0 R >>\nendobj\n`));
+          const merged = [...headerCommands(index + 1, pageRefs.length), ...ref.commands, ...footerCommands(index + 1, pageRefs.length)].join('\n');
+          const contentBytes = encoder.encode(merged);
+          objects.push(concatUint8([
+            encoder.encode(`${ref.contentId} 0 obj\n<< /Length ${contentBytes.length} >>\nstream\n`),
+            contentBytes,
+            encoder.encode('\nendstream\nendobj\n')
+          ]));
+        });
+
+        objects.push(encoder.encode(`${helveticaId} 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n`));
+        objects.push(encoder.encode(`${helveticaBoldId} 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>\nendobj\n`));
+        objects.push(encoder.encode(`${courierId} 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>\nendobj\n`));
+
+        return createPdfFromObjects(objects);
+      }
+
+      function downloadPdfDirect() {
+        if (!receiptShell.classList.contains('sent')) return;
+        try {
+          savePdfButton.disabled = true;
+          const data = getReceiptData();
+          const pdfBlob = createRequestPdfBlob(data);
+          const base = sanitizeFilename(`${data.reference}-request-document`);
+          downloadBlob(pdfBlob, `${base}.pdf`);
+        } catch (error) {
+          console.error(error);
+          alert('PDF export failed.');
+        } finally {
+          savePdfButton.disabled = false;
+        }
+      }
+
+      function buildExportMarkup(data) {
+        const identitySvg = liveIdentity.outerHTML.replace('id="liveIdentity"', '');
+        const budgetBlock = data.budget ? `
+          <div class="row-card">
+            <div class="label">Budget</div>
+            <div class="value">${makeLines(data.budget)}</div>
+          </div>` : '';
+        const notesBlock = data.notes ? `
+          <section class="block">
+            <div class="label">Notes</div>
+            <div class="body-value">${makeLines(data.notes)}</div>
+          </section>` : '';
+
+        return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>${escapeHtml(data.reference)}</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    min-height: 100%;
+    background: transparent;
+    color: #111111;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+  body {
+    padding: 24px;
+  }
+  .page {
+    width: 210mm;
+    max-width: 100%;
+    margin: 0 auto;
+    background: #ffffff;
+  }
+  .sheet {
+    width: 100%;
+    min-height: 297mm;
+    background: #ffffff;
+    border: 1px solid rgba(0,0,0,0.08);
+    padding: 18mm;
+    display: grid;
+    gap: 14px;
+  }
+  .kicker {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(17,17,17,0.58);
+  }
+  h1 {
+    margin: 0;
+    font-size: 28px;
+    line-height: 1.02;
+    letter-spacing: -0.04em;
+    font-weight: 600;
+  }
+  .sub {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: rgba(17,17,17,0.58);
+  }
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .row-card, .block, .identity-card {
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 16px;
+    padding: 12px 14px;
+    background: rgba(0,0,0,0.02);
+    min-width: 0;
+  }
+  .label {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(17,17,17,0.58);
+    margin-bottom: 6px;
+  }
+  .value {
+    font-size: 14px;
+    line-height: 1.45;
+    font-weight: 500;
+  }
+  .body-value {
+    font-size: 14px;
+    line-height: 1.55;
+    white-space: normal;
+  }
+  .mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    letter-spacing: 0.06em;
+  }
+  .divider {
+    height: 1px;
+    background: rgba(0,0,0,0.08);
+  }
+  .identity-card {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 12px;
+    align-items: center;
+  }
+  .identity-box {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    background: rgba(17,17,17,0.04);
+    border: 1px solid rgba(0,0,0,0.08);
+  }
+  .identity-box svg {
+    width: 24px;
+    height: 24px;
+    display: block;
+  }
+  @page {
+    size: A4;
+    margin: 0;
+  }
+  @media print {
+    body { padding: 0; }
+    .page { width: 210mm; max-width: none; }
+    .sheet { border: none; min-height: 297mm; }
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+    <div class="sheet">
+      <div class="kicker">Request sent</div>
+      <h1>For your documentation</h1>
+      <p class="sub">Your request has been sent. We will review it and contact you using the details you provided. This PDF is a copy for your own documentation.</p>
+      <div class="meta-grid">
+        <div class="row-card">
+          <div class="label">Reference</div>
+          <div class="value mono">${escapeHtml(data.reference)}</div>
+        </div>
+        <div class="row-card">
+          <div class="label">Submitted</div>
+          <div class="value">${escapeHtml(data.submittedAt)}</div>
+        </div>
+      </div>
+      <div class="meta-grid">
+        <div class="row-card">
+          <div class="label">Name</div>
+          <div class="value">${makeLines(data.name)}</div>
+        </div>
+        <div class="row-card">
+          <div class="label">Company</div>
+          <div class="value">${makeLines(data.company)}</div>
+        </div>
+      </div>
+      <div class="row-card">
+        <div class="label">Contact</div>
+        <div class="value">${makeLines(data.contact)}</div>
+      </div>
+      <div class="meta-grid">
+        <div class="row-card">
+          <div class="label">Request type</div>
+          <div class="value">${makeLines(data.type)}</div>
+        </div>
+        <div class="row-card">
+          <div class="label">Deadline</div>
+          <div class="value">${makeLines(data.deadline)}</div>
+        </div>
+      </div>
+      <div class="row-card">
+        <div class="label">Project title</div>
+        <div class="value">${makeLines(data.title)}</div>
+      </div>
+      ${budgetBlock}
+      <section class="block">
+        <div class="label">Request summary</div>
+        <div class="body-value">${makeLines(data.summary)}</div>
+      </section>
+      ${notesBlock}
+      <div class="divider"></div>
+      <div class="identity-card">
+        <div class="identity-box">${identitySvg}</div>
+        <div>
+          <div class="label">Project identity</div>
+          <div class="value">${makeLines(data.identityLabel)}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+      }
+
+      function openExportWindow(autoPrint) {
+        if (!receiptShell.classList.contains('sent')) return;
+        const data = getReceiptData();
+        const html = buildExportMarkup(data);
+        const exportWindow = window.open('about:blank', '_blank');
+        if (!exportWindow) {
+          alert('Please allow pop-ups for the document export.');
+          return;
+        }
+
+        exportWindow.document.open();
+        exportWindow.document.write(html);
+        exportWindow.document.close();
+
+        if (autoPrint) {
+          const triggerPrint = () => {
+            try {
+              exportWindow.focus();
+              exportWindow.print();
+            } catch (_) {}
+          };
+          exportWindow.onload = triggerPrint;
+          setTimeout(triggerPrint, 350);
+        }
+      }
+    })();
+  </script>
+</body>
+</html>
