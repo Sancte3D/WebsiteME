@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Project Brief</title>
+<style>
+:root{
+  color-scheme:light;
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue",Arial,sans-serif;
+  --bg:#F2F2F7;
+  --panel:rgba(255,255,255,.72);
+  --panel-strong:rgba(255,255,255,.86);
+  --sheet:#fff;
+  --text:rgba(0,0,0,.95);
+  --muted:rgba(60,60,67,.60);
+  --tertiary:rgba(60,60,67,.40);
+  --placeholder:rgba(60,60,67,.34);
+  --line:rgba(0,0,0,.06);
+  --line-strong:rgba(0,0,0,.12);
+  --accent:#000;
+  --accent-soft:rgba(0,0,0,.08);
+  --active-pill:rgba(0,0,0,.06);
+  --ghost:rgba(0,0,0,.03);
+  --shadow:0 8px 32px rgba(0,0,0,.08);
+  --sheet-shadow:0 22px 70px rgba(0,0,0,.12);
+  --spring:cubic-bezier(.22,1,.36,1);
+  --spring-time:320ms;
+}
+@supports (animation-timing-function:linear(0,1)){
+  :root{--spring:linear(0,0.06,0.25,0.55,0.81,0.98,1.05,1.07,1.05,1);--spring-time:520ms}
+}
+*{box-sizing:border-box;scrollbar-width:none;-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision}
+::-webkit-scrollbar{display:none}
+html,body{
+  margin:0;
+  min-height:100%;
+  font-family:var(--font);
+  color:var(--text);
+  background-color:var(--bg);
+  background-image:radial-gradient(circle at 50% 0%,rgba(255,255,255,.70) 0%,transparent 70%);
+  overflow-wrap:break-word;
+  word-break:break-word;
+}
+.app{width:min(980px,calc(100% - 32px));margin:0 auto;padding:28px 0 48px}
+.stack{display:grid;gap:18px}
+.hero{display:grid;gap:10px;padding:4px 2px 2px}
+.kicker{font-size:13px;line-height:1.15;letter-spacing:.05em;text-transform:uppercase;color:var(--tertiary);font-weight:500}
+.title-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:start}
+h1{margin:0;font-size:clamp(34px,5vw,54px);line-height:.98;letter-spacing:-.055em;font-weight:600}
+.meta-pills{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;min-width:0}
+.pill{display:inline-flex;align-items:center;gap:8px;min-width:0;min-height:36px;padding:0 12px;border-radius:999px;border:.5px solid var(--line);background:var(--panel);color:var(--muted);box-shadow:var(--shadow);backdrop-filter:blur(24px) saturate(150%);-webkit-backdrop-filter:blur(24px) saturate(150%);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pill strong{color:var(--text);font-size:11px;letter-spacing:.05em;text-transform:uppercase;font-weight:600}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;letter-spacing:.04em;font-variant-numeric:tabular-nums}
+.card{background:var(--panel);border:.5px solid var(--line);border-radius:24px;box-shadow:var(--shadow);backdrop-filter:blur(24px) saturate(150%);-webkit-backdrop-filter:blur(24px) saturate(150%)}
+.form-card{padding:18px;display:grid;gap:18px}
+.form-head{display:grid;gap:8px;min-width:0}
+.form-head h2,.receipt-head h2{margin:0;font-size:17px;line-height:1.18;letter-spacing:-.025em;font-weight:600}
+.form-head p,.receipt-head p{margin:0;font-size:13px;line-height:1.45;color:var(--muted);max-width:640px}
+form{display:grid;gap:18px}
+.section{display:grid;gap:12px;min-width:0}
+.section-label{font-size:14px;font-weight:500;letter-spacing:-.01em;color:var(--muted)}
+.field-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;min-width:0}
+.field{display:grid;gap:8px;min-width:0}
+.field.full{grid-column:1/-1}
+label{display:block;font-size:11px;letter-spacing:.035em;text-transform:uppercase;color:var(--tertiary);font-weight:600}
+input,textarea,button{font:inherit}
+input,textarea{width:100%;min-width:0;border:0;background:rgba(0,0,0,.04);color:var(--text);border-radius:8px;padding:0 10px;outline:none;transition:background var(--spring-time) var(--spring),box-shadow var(--spring-time) var(--spring);font-size:14px;font-weight:500;letter-spacing:-.01em}
+input{min-height:36px;height:36px}
+textarea{resize:vertical;min-height:112px;max-height:260px;padding-top:9px;padding-bottom:9px;line-height:1.45}
+input::placeholder,textarea::placeholder{color:var(--placeholder)}
+input:focus,textarea:focus{background:transparent;box-shadow:0 0 0 2px rgba(10,132,255,.32)}
+.language-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.language-option{appearance:none;border:0;min-height:40px;border-radius:999px;padding:0 14px;background:rgba(0,0,0,.04);color:var(--muted);cursor:pointer;transition:background var(--spring-time) var(--spring),color var(--spring-time) var(--spring),transform 120ms ease;font-size:14px;font-weight:600;letter-spacing:-.01em}
+.language-option:hover{background:var(--active-pill);color:var(--text)}
+.language-option:active{transform:scale(.97)}
+.language-option.active{background:var(--text);color:#fff}
+.type-list{display:grid;gap:6px}
+.type-option{width:100%;min-width:0;border:0;background:transparent;border-radius:12px;padding:10px;display:grid;grid-template-columns:8px minmax(0,1fr);gap:10px;align-items:start;cursor:pointer;transition:background var(--spring-time) var(--spring),color var(--spring-time) var(--spring),transform 120ms ease;text-align:left;color:var(--muted)}
+.type-option:hover,.type-option.active{background:var(--active-pill);color:var(--text)}
+.type-option:active{transform:scale(.99)}
+.type-option-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);margin-top:7px;box-shadow:0 0 0 4px transparent}
+.type-option.active .type-option-dot{box-shadow:0 0 0 4px var(--accent-soft)}
+.type-option-copy{display:grid;gap:3px;min-width:0}
+.type-option-copy strong{font-size:14px;line-height:1.25;font-weight:600;color:var(--text);letter-spacing:-.01em}
+.type-option-copy span{font-size:12px;line-height:1.4;color:var(--muted)}
+.actions{display:grid;gap:10px;padding-top:4px}
+.primary-button,.secondary-button{appearance:none;border:0;border-radius:999px;padding:0 16px;min-height:44px;background:var(--panel-strong);color:var(--text);cursor:pointer;transition:transform 120ms ease,background var(--spring-time) var(--spring),opacity 140ms ease;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px;font-weight:600;letter-spacing:-.01em}
+.primary-button:hover,.secondary-button:hover{background:#fff}
+.primary-button:active,.secondary-button:active{transform:scale(.97)}
+.primary-button{background:var(--text);color:#fff}
+.primary-button:hover{background:rgba(0,0,0,.86)}
+.hint{font-size:12px;color:var(--tertiary);line-height:1.45}
+.receipt-shell{display:none;gap:18px}
+.receipt-shell.sent{display:grid}
+.receipt-card{background:var(--sheet);border:.5px solid var(--line);border-radius:28px;box-shadow:var(--sheet-shadow);padding:20px;display:grid;gap:18px;min-width:0}
+.receipt-head{display:grid;gap:10px;padding-bottom:2px;border-bottom:.5px solid var(--line)}
+.receipt-meta,.receipt-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;min-width:0}
+.receipt-item,.receipt-block{display:grid;gap:6px;min-width:0;min-height:0;padding:12px 14px;border-radius:14px;border:.5px solid var(--line);background:rgba(0,0,0,.025)}
+.receipt-item span,.receipt-block span{font-size:11px;letter-spacing:.035em;text-transform:uppercase;color:var(--tertiary);font-weight:600}
+.receipt-item strong,.receipt-block strong{font-size:14px;line-height:1.45;font-weight:500;letter-spacing:-.01em;white-space:pre-wrap}
+.receipt-body{display:grid;gap:12px}
+.receipt-actions{display:none;gap:10px;justify-content:flex-start;align-items:center;flex-wrap:wrap}
+.receipt-actions.sent{display:flex}
+.receipt-actions .primary-button,.receipt-actions .secondary-button{width:auto;min-width:148px;box-shadow:var(--shadow)}
+.hidden{display:none!important}
+
+.brief-preview-section{display:none;gap:12px;opacity:1;transform:translateY(0);transition:opacity 260ms ease,transform 360ms var(--spring),max-height 420ms ease;margin-top:0}
+.preview-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;padding:0 2px;color:var(--tertiary);font-size:12px;font-weight:500;letter-spacing:-.01em}
+.sheet-frame{width:100%;display:grid;place-items:center}
+.sheet{width:min(100%,760px);aspect-ratio:210/297;background:#fff;border-radius:0;box-shadow:0 22px 70px rgba(0,0,0,.12);overflow:hidden}
+.sheet svg{display:block;width:100%;height:100%}
+.app.submitted .brief-preview-section{opacity:0;transform:translateY(-18px) scale(.985);max-height:0;overflow:hidden;margin:0;pointer-events:none}
+
+.success-panel{display:none;text-align:center;max-width:720px;width:100%;padding:4px 12px;opacity:0;transform:translateY(14px) scale(.985);transition:opacity var(--spring-time) var(--spring),transform var(--spring-time) var(--spring)}
+.success-panel .kicker{justify-content:center;margin-bottom:16px;color:var(--tertiary)}
+.success-panel h2{margin:0 auto 14px;font-size:clamp(34px,6vw,64px);line-height:.96;letter-spacing:-.06em;font-weight:600;max-width:680px;color:var(--text)}
+.success-panel p{margin:0 auto;color:var(--muted);font-size:clamp(16px,2vw,20px);line-height:1.42;letter-spacing:-.025em;max-width:640px}
+.app.submitted{min-height:100vh;display:grid;place-items:center;padding:32px 0}
+.app.submitted .stack{width:min(760px,100%);min-height:calc(100vh - 96px);align-content:center;justify-items:center;gap:24px}
+.app.submitted .hero,.app.submitted .form-card{opacity:0;transform:translateY(-18px) scale(.985);max-height:0;overflow:hidden;padding-top:0;padding-bottom:0;margin:0;pointer-events:none;transition:opacity 260ms ease,transform 360ms var(--spring),max-height 420ms ease,padding 420ms ease,margin 420ms ease}
+.app.submitted .receipt-shell{width:100%;justify-items:center;gap:26px}
+.app.submitted .receipt-card{display:none}
+.app.submitted .success-panel{display:grid;gap:0;animation:successIn 620ms var(--spring) 130ms both}
+.app.submitted .receipt-actions.sent{display:flex;justify-content:center;align-items:center;gap:10px;width:100%}
+.app.submitted .receipt-actions .primary-button,.app.submitted .receipt-actions .secondary-button{min-width:160px;box-shadow:none}
+.app.submitted .receipt-actions .secondary-button{background:#fff;color:var(--text);border:.5px solid var(--line)}
+.app.submitted .receipt-actions .secondary-button:hover{background:rgba(255,255,255,.78)}
+@keyframes successIn{from{opacity:0;transform:translateY(18px) scale(.985);filter:blur(4px)}to{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
+@media(max-width:900px){.app{width:min(100%,calc(100% - 24px));padding-top:20px}.title-row{grid-template-columns:1fr}.meta-pills{justify-content:flex-start}}
+@media(max-width:720px){.field-grid,.receipt-meta,.receipt-grid{grid-template-columns:1fr}.form-card,.receipt-card{padding:16px}.app{width:calc(100% - 20px)}h1{font-size:38px}}
+</style>
+</head>
+<body>
+<main class="app">
+  <div class="stack">
+    <header class="hero">
+      <div class="kicker">Briefing tool</div>
+      <div class="title-row">
+        <h1>Project Brief</h1>
+        <div class="meta-pills">
+          <div class="pill"><strong>Ref</strong><span id="liveRef" class="mono">BRF-000000</span></div>
+        </div>
+      </div>
+    </header>
+
+    <section class="card form-card" aria-labelledby="requestTitle">
+      <div class="form-head">
+        <div class="kicker" data-i18n="formKicker">Brief</div>
+        <h2 id="requestTitle" data-i18n="formTitle">Structure the brief</h2>
+        <p data-i18n="formIntro">A simple structure for project context, direction and next steps.</p>
+      </div>
+
+      <form id="requestForm" novalidate>
+        <div class="section">
+          <div class="section-label" data-i18n="languageLabel">Language</div>
+          <div class="language-row">
+            <button class="language-option active" type="button" data-lang="en">EN</button>
+            <button class="language-option" type="button" data-lang="de">DE</button>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-label" data-i18n="basicsLabel">Basics</div>
+          <div class="field-grid">
+            <div class="field">
+              <label for="nameInput" data-i18n="nameLabel">Name</label>
+              <input id="nameInput" type="text" placeholder="Type here..." maxlength="120" />
+            </div>
+            <div class="field">
+              <label for="companyInput" data-i18n="companyLabel">Company</label>
+              <input id="companyInput" type="text" placeholder="Type here..." maxlength="140" />
+            </div>
+            <div class="field full">
+              <label for="contactInput" data-i18n="contactLabel">Contact</label>
+              <input id="contactInput" type="text" placeholder="Type here..." maxlength="180" />
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-label" data-i18n="briefTypeLabel">Brief type</div>
+          <div class="type-list" id="typeList">
+            <button class="type-option" type="button" data-type="3D / Visual">
+              <div class="type-option-dot"></div>
+              <div class="type-option-copy">
+                <strong data-i18n="type3dTitle">3D / Visual</strong>
+                <span data-i18n="type3dDesc">Assets, renders, textures, scenes, motion or visual development.</span>
+              </div>
+            </button>
+            <button class="type-option" type="button" data-type="Graphic / Layout">
+              <div class="type-option-dot"></div>
+              <div class="type-option-copy">
+                <strong data-i18n="typeGraphicTitle">Graphic / Layout</strong>
+                <span data-i18n="typeGraphicDesc">Graphic systems, editorial layouts, branding, decks or presentation design.</span>
+              </div>
+            </button>
+            <button class="type-option" type="button" data-type="Product / Object">
+              <div class="type-option-dot"></div>
+              <div class="type-option-copy">
+                <strong data-i18n="typeProductTitle">Product / Object</strong>
+                <span data-i18n="typeProductDesc">Concepts, object proposals, industrial design directions or material studies.</span>
+              </div>
+            </button>
+            <button class="type-option" type="button" data-type="Custom">
+              <div class="type-option-dot"></div>
+              <div class="type-option-copy">
+                <strong data-i18n="typeCustomTitle">Custom</strong>
+                <span data-i18n="typeCustomDesc">Anything outside the categories above.</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-label" data-i18n="briefDetailsLabel">Brief details</div>
+          <div class="field-grid">
+            <div class="field full">
+              <label for="titleInput" data-i18n="projectTitleLabel">Project title</label>
+              <input id="titleInput" type="text" placeholder="Type here..." maxlength="220" />
+            </div>
+            <div class="field">
+              <label for="deadlineInput" data-i18n="deadlineLabel">Deadline</label>
+              <input id="deadlineInput" type="text" placeholder="Type here..." maxlength="80" />
+            </div>
+            <div class="field">
+              <label for="budgetInput" data-i18n="budgetLabel">Budget</label>
+              <input id="budgetInput" type="text" placeholder="Type here..." maxlength="120" />
+            </div>
+            <div class="field full">
+              <label for="summaryInput" data-i18n="summaryLabel">Project summary</label>
+              <textarea id="summaryInput" placeholder="Type here..."></textarea>
+            </div>
+            <div class="field full">
+              <label for="notesInput" data-i18n="notesLabel">Notes</label>
+              <textarea id="notesInput" placeholder="Type here..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="sendButton" class="primary-button" type="submit" data-i18n="createButton">Create brief</button>
+          <div class="hint" data-i18n="formHint">After creation, the confirmation and A4 export appear below.</div>
+        </div>
+      </form>
+    </section>
+
+    <section id="receiptShell" class="receipt-shell" aria-live="polite">
+      <article class="success-panel" id="successPanel">
+        <div class="kicker" id="successKicker">Brief created</div>
+        <h2 id="successTitle">Brief has been created.</h2>
+        <p id="successText">We will automatically receive your project brief and get back to you after reviewing the details. Thank you.</p>
+      </article>
+
+      <article class="receipt-card" id="receiptCard">
+        <div class="receipt-head">
+          <div class="kicker" data-i18n="completeKicker">Brief created</div>
+          <h2 id="completionTitle">Brief has been created.</h2>
+          <p id="receiptStatusText">We will automatically receive your project brief and get back to you after reviewing the details. Thank you.</p>
+        </div>
+
+        <div class="receipt-meta">
+          <div class="receipt-item"><span id="receiptLabelRef">Reference</span><strong id="receiptRef" class="mono">BRF-000000</strong></div>
+          <div class="receipt-item"><span id="receiptLabelSubmitted">Submitted</span><strong id="receiptDate">—</strong></div>
+        </div>
+
+        <div class="receipt-body">
+          <div class="receipt-grid">
+            <div class="receipt-item"><span id="receiptLabelName">Name</span><strong id="receiptName">—</strong></div>
+            <div class="receipt-item"><span id="receiptLabelCompany">Company</span><strong id="receiptCompany">—</strong></div>
+          </div>
+          <div class="receipt-item"><span id="receiptLabelContact">Contact</span><strong id="receiptContact">—</strong></div>
+          <div class="receipt-grid">
+            <div class="receipt-item"><span id="receiptLabelType">Brief type</span><strong id="receiptType">—</strong></div>
+            <div class="receipt-item"><span id="receiptLabelDeadline">Deadline</span><strong id="receiptDeadline">—</strong></div>
+          </div>
+          <div class="receipt-item"><span id="receiptLabelTitle">Project title</span><strong id="receiptTitle">—</strong></div>
+          <div class="receipt-item hidden" id="receiptBudgetWrap"><span id="receiptLabelBudget">Budget</span><strong id="receiptBudget">—</strong></div>
+          <div class="receipt-block"><span id="receiptLabelSummary">Project summary</span><strong id="receiptSummary">—</strong></div>
+          <div class="receipt-block hidden" id="receiptNotesWrap"><span id="receiptLabelNotes">Notes</span><strong id="receiptNotes">—</strong></div>
+        </div>
+      </article>
+
+      <div id="receiptActions" class="receipt-actions">
+        <button id="savePdfButton" class="primary-button" type="button" data-i18n="downloadButton">Download A4 PDF</button>
+        <button id="homeButton" class="secondary-button" type="button" data-i18n="homeButton">Head back home</button>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>
+(() => {
+  const HOME_URL = '/';
+  const app = document.querySelector('.app');
+  const form = document.getElementById('requestForm');
+  const sendButton = document.getElementById('sendButton');
+  const receiptShell = document.getElementById('receiptShell');
+  const receiptActions = document.getElementById('receiptActions');
+  const typeButtons = [...document.querySelectorAll('.type-option')];
+  const languageButtons = [...document.querySelectorAll('.language-option')];
+  const savePdfButton = document.getElementById('savePdfButton');
+  const homeButton = document.getElementById('homeButton');
+  const briefSheetPreview = document.getElementById('briefSheetPreview');
+  const previewLabel = document.getElementById('previewLabel');
+  const previewHint = document.getElementById('previewHint');
+
+  const fields = {
+    name: document.getElementById('nameInput'),
+    company: document.getElementById('companyInput'),
+    contact: document.getElementById('contactInput'),
+    title: document.getElementById('titleInput'),
+    deadline: document.getElementById('deadlineInput'),
+    budget: document.getElementById('budgetInput'),
+    summary: document.getElementById('summaryInput'),
+    notes: document.getElementById('notesInput')
+  };
+
+  const nodes = {
+    liveRef: document.getElementById('liveRef'),
+    completionTitle: document.getElementById('completionTitle'),
+    receiptStatusText: document.getElementById('receiptStatusText'),
+    successKicker: document.getElementById('successKicker'),
+    successTitle: document.getElementById('successTitle'),
+    successText: document.getElementById('successText'),
+    receiptRef: document.getElementById('receiptRef'),
+    receiptDate: document.getElementById('receiptDate'),
+    receiptName: document.getElementById('receiptName'),
+    receiptCompany: document.getElementById('receiptCompany'),
+    receiptContact: document.getElementById('receiptContact'),
+    receiptType: document.getElementById('receiptType'),
+    receiptTitle: document.getElementById('receiptTitle'),
+    receiptDeadline: document.getElementById('receiptDeadline'),
+    receiptBudget: document.getElementById('receiptBudget'),
+    receiptBudgetWrap: document.getElementById('receiptBudgetWrap'),
+    receiptSummary: document.getElementById('receiptSummary'),
+    receiptNotes: document.getElementById('receiptNotes'),
+    receiptNotesWrap: document.getElementById('receiptNotesWrap')
+  };
+
+  const copy = {
+    en: {
+      htmlLang:'en', formKicker:'Brief', formTitle:'Structure the brief', formIntro:'A simple structure for project context, direction and next steps.',
+      languageLabel:'Language', basicsLabel:'Basics', nameLabel:'Name', companyLabel:'Company', contactLabel:'Contact', briefTypeLabel:'Brief type', briefDetailsLabel:'Brief details',
+      projectTitleLabel:'Project title', deadlineLabel:'Deadline', budgetLabel:'Budget', summaryLabel:'Project summary', notesLabel:'Notes',
+      createButton:'Create brief', updateButton:'Update brief', formHint:'After creation, the form closes and the export becomes available.',
+      completeKicker:'Brief created', completeTitle:'Brief has been created.', completeText:'We will automatically receive your project brief and get back to you after reviewing the details. Thank you.',
+      downloadButton:'Download A4 PDF', homeButton:'Head back home',
+      type3dTitle:'3D / Visual', type3dDesc:'Assets, renders, textures, scenes, motion or visual development.',
+      typeGraphicTitle:'Graphic / Layout', typeGraphicDesc:'Graphic systems, editorial layouts, branding, decks or presentation design.',
+      typeProductTitle:'Product / Object', typeProductDesc:'Concepts, object proposals, industrial design directions or material studies.',
+      typeCustomTitle:'Custom', typeCustomDesc:'Anything outside the categories above.',
+      labels:{ref:'Reference',submitted:'Submitted',name:'Name',company:'Company',contact:'Contact',type:'Brief type',title:'Project title',deadline:'Deadline',budget:'Budget',summary:'Project summary',notes:'Notes'},
+      typeValues:{'3D / Visual':'3D / Visual','Graphic / Layout':'Graphic / Layout','Product / Object':'Product / Object','Custom':'Custom'},
+      pdfKicker:'Brief created', pdfTitle:'Project Brief', pdfSub:'We will automatically receive your project brief and get back to you after reviewing the details. Thank you.', footer:'Generated from your structured brief', previewLabel:'A4 preview', previewHint:'Download matches this document'
+    },
+    de: {
+      htmlLang:'de', formKicker:'Briefing', formTitle:'Briefing strukturieren', formIntro:'Eine einfache Struktur für Projektkontext, Richtung und nächste Schritte.',
+      languageLabel:'Sprache', basicsLabel:'Basisdaten', nameLabel:'Name', companyLabel:'Firma', contactLabel:'Kontakt', briefTypeLabel:'Briefing-Typ', briefDetailsLabel:'Briefing-Details',
+      projectTitleLabel:'Projekttitel', deadlineLabel:'Deadline', budgetLabel:'Budget', summaryLabel:'Projektzusammenfassung', notesLabel:'Notizen',
+      createButton:'Briefing erstellen', updateButton:'Briefing aktualisieren', formHint:'Nach dem Erstellen schließt sich das Formular und der Export ist verfügbar.',
+      completeKicker:'Briefing erstellt', completeTitle:'Das Briefing wurde erstellt.', completeText:'Wir erhalten dein Projektbriefing automatisch und melden uns, sobald wir die Details geprüft haben. Vielen Dank.',
+      downloadButton:'A4-PDF herunterladen', homeButton:'Zurück zur Startseite',
+      type3dTitle:'3D / Visual', type3dDesc:'Assets, Renderings, Texturen, Szenen, Motion oder visuelle Entwicklung.',
+      typeGraphicTitle:'Grafik / Layout', typeGraphicDesc:'Grafische Systeme, Editorial Layouts, Branding, Decks oder Präsentationsdesign.',
+      typeProductTitle:'Produkt / Objekt', typeProductDesc:'Konzepte, Objektentwürfe, Industrial-Design-Richtungen oder Materialstudien.',
+      typeCustomTitle:'Individuell', typeCustomDesc:'Alles, was nicht in die Kategorien oben passt.',
+      labels:{ref:'Referenz',submitted:'Erstellt',name:'Name',company:'Firma',contact:'Kontakt',type:'Briefing-Typ',title:'Projekttitel',deadline:'Deadline',budget:'Budget',summary:'Projektzusammenfassung',notes:'Notizen'},
+      typeValues:{'3D / Visual':'3D / Visual','Graphic / Layout':'Grafik / Layout','Product / Object':'Produkt / Objekt','Custom':'Individuell'},
+      pdfKicker:'Briefing erstellt', pdfTitle:'Projektbriefing', pdfSub:'Wir erhalten dein Projektbriefing automatisch und melden uns, sobald wir die Details geprüft haben. Vielen Dank.', footer:'Generiert aus deinem strukturierten Briefing', previewLabel:'A4-Vorschau', previewHint:'Download entspricht diesem Dokument'
+    }
+  };
+
+  let selectedLanguage = 'en';
+  let selectedType = '';
+  let lastSubmittedAt = '';
+  let hasSubmitted = false;
+
+  languageButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      selectedLanguage = button.dataset.lang || 'en';
+      languageButtons.forEach(item => item.classList.toggle('active', item === button));
+      applyLanguage();
+      if (hasSubmitted) renderReceipt();
+    });
+  });
+
+  typeButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      selectedType = button.dataset.type || '';
+      typeButtons.forEach(item => item.classList.toggle('active', item === button));
+      updateLiveRef();
+    });
+  });
+
+  Object.values(fields).forEach(field => {
+    if (field.tagName === 'TEXTAREA') {
+      autoResize(field);
+      field.addEventListener('input', () => autoResize(field));
+    }
+    field.addEventListener('input', () => { updateLiveRef(); });
+  });
+
+  form.addEventListener('submit', event => {
+    event.preventDefault();
+    if (!validate()) return;
+    hasSubmitted = true;
+    lastSubmittedAt = formatDateTime(new Date());
+    renderReceipt();
+    sendButton.textContent = copy[selectedLanguage].updateButton;
+    receiptShell.classList.add('sent');
+    receiptActions.classList.add('sent');
+    app.classList.add('submitted');
+    window.scrollTo({top:0,behavior:'smooth'});
+  });
+
+  savePdfButton.addEventListener('click', downloadA4Pdf);
+  homeButton.addEventListener('click', () => { window.location.href = HOME_URL; });
+
+  applyLanguage();
+  updateLiveRef();
+  function applyLanguage(){
+    const dict = copy[selectedLanguage];
+    document.documentElement.lang = dict.htmlLang;
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.dataset.i18n;
+      if (dict[key]) el.textContent = dict[key];
+    });
+    nodes.completionTitle.textContent = dict.completeTitle;
+    nodes.receiptStatusText.textContent = dict.completeText;
+    nodes.successKicker.textContent = dict.completeKicker;
+    nodes.successTitle.textContent = dict.completeTitle;
+    nodes.successText.textContent = dict.completeText;
+    sendButton.textContent = hasSubmitted ? dict.updateButton : dict.createButton;
+    if (previewLabel) previewLabel.textContent = dict.previewLabel;
+    if (previewHint) previewHint.textContent = dict.previewHint;
+    setText('receiptLabelRef', dict.labels.ref);
+    setText('receiptLabelSubmitted', dict.labels.submitted);
+    setText('receiptLabelName', dict.labels.name);
+    setText('receiptLabelCompany', dict.labels.company);
+    setText('receiptLabelContact', dict.labels.contact);
+    setText('receiptLabelType', dict.labels.type);
+    setText('receiptLabelTitle', dict.labels.title);
+    setText('receiptLabelDeadline', dict.labels.deadline);
+    setText('receiptLabelBudget', dict.labels.budget);
+    setText('receiptLabelSummary', dict.labels.summary);
+    setText('receiptLabelNotes', dict.labels.notes);
+  }
+
+  function setText(id, value){
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  }
+
+  function validate(){
+    const missing = [];
+    if (!fields.name.value.trim()) missing.push(fields.name);
+    if (!fields.contact.value.trim()) missing.push(fields.contact);
+    if (!selectedType) missing.push(typeButtons[0]);
+    if (!fields.title.value.trim()) missing.push(fields.title);
+    if (!fields.summary.value.trim()) missing.push(fields.summary);
+
+    document.querySelectorAll('[data-invalid="true"]').forEach(el => {
+      el.dataset.invalid = 'false';
+      el.style.boxShadow = '';
+    });
+
+    if (!missing.length) return true;
+
+    missing.forEach(item => {
+      item.dataset.invalid = 'true';
+      item.style.boxShadow = '0 0 0 2px rgba(255,59,48,.32)';
+    });
+
+    const first = missing[0];
+    if (first && typeof first.focus === 'function') first.focus();
+    return false;
+  }
+
+  function autoResize(textarea){
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.max(textarea.scrollHeight,112) + 'px';
+  }
+
+  function safeValue(value, fallback='—'){
+    return value && value.trim() ? value.trim() : fallback;
+  }
+
+  function getReceiptData(){
+    const dict = copy[selectedLanguage];
+    const rawType = selectedType || '—';
+    return {
+      lang:selectedLanguage,
+      labels:dict.labels,
+      name:safeValue(fields.name.value,'—'),
+      company:safeValue(fields.company.value,'—'),
+      contact:safeValue(fields.contact.value,'—'),
+      type:dict.typeValues[rawType] || rawType,
+      title:safeValue(fields.title.value, selectedLanguage === 'de' ? 'Unbenanntes Briefing' : 'Untitled brief'),
+      deadline:safeValue(fields.deadline.value,'—'),
+      budget:safeValue(fields.budget.value,''),
+      summary:safeValue(fields.summary.value,'—'),
+      notes:safeValue(fields.notes.value,''),
+      reference:buildReference(),
+      submittedAt:lastSubmittedAt || formatDateTime(new Date()),
+      pdfKicker:dict.pdfKicker,
+      pdfTitle:dict.pdfTitle,
+      pdfSub:dict.pdfSub,
+      footer:dict.footer
+    };
+  }
+
+  function renderReceipt(){
+    const data = getReceiptData();
+    nodes.completionTitle.textContent = copy[selectedLanguage].completeTitle;
+    nodes.receiptStatusText.textContent = copy[selectedLanguage].completeText;
+    nodes.receiptRef.textContent = data.reference;
+    nodes.receiptDate.textContent = data.submittedAt;
+    nodes.receiptName.textContent = data.name;
+    nodes.receiptCompany.textContent = data.company;
+    nodes.receiptContact.textContent = data.contact;
+    nodes.receiptType.textContent = data.type;
+    nodes.receiptTitle.textContent = data.title;
+    nodes.receiptDeadline.textContent = data.deadline;
+    nodes.receiptSummary.textContent = data.summary;
+
+    if (data.budget){
+      nodes.receiptBudgetWrap.classList.remove('hidden');
+      nodes.receiptBudget.textContent = data.budget;
+    } else {
+      nodes.receiptBudgetWrap.classList.add('hidden');
+    }
+
+    if (data.notes){
+      nodes.receiptNotesWrap.classList.remove('hidden');
+      nodes.receiptNotes.textContent = data.notes;
+    } else {
+      nodes.receiptNotesWrap.classList.add('hidden');
+    }
+  }
+
+  function updateLiveRef(){
+    nodes.liveRef.textContent = buildReference();
+  }
+
+  function buildReference(){
+    const seed = hashString([
+      fields.name.value,
+      fields.company.value,
+      fields.contact.value,
+      selectedType,
+      fields.title.value,
+      fields.summary.value,
+      fields.notes.value
+    ].join('|') || 'project-brief');
+    const code = Math.abs(seed).toString(36).toUpperCase().padStart(6,'0').slice(0,6);
+    return `BRF-${code}`;
+  }
+
+  function hashString(value){
+    let hash = 2166136261;
+    for (let i=0;i<value.length;i++){
+      hash ^= value.charCodeAt(i);
+      hash += (hash<<1)+(hash<<4)+(hash<<7)+(hash<<8)+(hash<<24);
+    }
+    return hash | 0;
+  }
+
+  function formatDateTime(date){
+    return new Intl.DateTimeFormat(selectedLanguage === 'de' ? 'de-DE' : 'en-GB', {
+      year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit'
+    }).format(date);
+  }
+
+  function sanitizeFilename(value){
+    return String(value || 'project-brief').toLowerCase().replace(/[^a-z0-9\-_.]+/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'') || 'project-brief';
+  }
+
+
+  function escapeXml(value){
+    return String(value ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
+  }
+
+  function svgLines(value, maxChars, maxLines=999){
+    const source = String(value ?? '').replace(/\r/g,'').split('\n');
+    const lines = [];
+    source.forEach(paragraph => {
+      const words = paragraph.split(/\s+/).filter(Boolean);
+      if (!words.length){ lines.push(''); return; }
+      let current = '';
+      words.forEach(word => {
+        const cleanWord = word.length > maxChars ? word.slice(0, maxChars - 1) + '…' : word;
+        const next = current ? current + ' ' + cleanWord : cleanWord;
+        if (next.length <= maxChars) current = next;
+        else { if (current) lines.push(current); current = cleanWord; }
+      });
+      if (current) lines.push(current);
+    });
+    const clipped = lines.slice(0, maxLines);
+    if (lines.length > maxLines && clipped.length) clipped[clipped.length - 1] = clipped[clipped.length - 1].replace(/…?$/,'…');
+    return clipped.length ? clipped : ['—'];
+  }
+
+  function splitLines(value, maxChars){
+    return svgLines(value, maxChars, 9999);
+  }
+
+  function svgTextBlock(lines, x, y, size, lineHeight, fill, weight=400, anchor='start', opacity=1){
+    let svg = `<text x="${x}" y="${y}" font-size="${size}" fill="${fill}" fill-opacity="${opacity}" font-weight="${weight}" text-anchor="${anchor}">`;
+    (lines.length ? lines : ['—']).forEach((line,index) => {
+      svg += `<tspan x="${x}" dy="${index === 0 ? 0 : lineHeight}">${escapeXml(line)}</tspan>`;
+    });
+    return svg + '</text>';
+  }
+
+  function openPage(pageIndex, pageCountEstimate){
+    const w = 794, h = 1123, mx = 72;
+    const primary = '#111111', tertiary = '#A2A2A8', line = '#E5E5EA';
+    let svg = `<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><style><![CDATA[text{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;text-rendering:geometricPrecision}.mono{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-variant-numeric:tabular-nums}]]></style><rect width="${w}" height="${h}" fill="#ffffff"/>`;
+    if (pageIndex > 0){
+      const label = selectedLanguage === 'de' ? 'FORTSETZUNG' : 'CONTINUED';
+      const title = selectedLanguage === 'de' ? 'Projektbriefing' : 'Project Brief';
+      svg += `<text x="${mx}" y="76" font-size="11" fill="${tertiary}" font-weight="700" letter-spacing="1.7">${label}</text>`;
+      svg += `<text x="${mx}" y="112" font-size="30" fill="${primary}" font-weight="600" letter-spacing="-1.3">${title}</text>`;
+      svg += `<line x1="${mx}" y1="140" x2="${w-mx}" y2="140" stroke="${line}" stroke-width="1"/>`;
+    }
+    return svg;
+  }
+
+  function closePage(svg, pageIndex, pageCount, data){
+    const w = 794, mx = 72, tertiary = '#A2A2A8', line = '#E5E5EA';
+    svg += `<line x1="${mx}" y1="1040" x2="${w-mx}" y2="1040" stroke="${line}" stroke-width="1"/>`;
+    svg += `<text x="${mx}" y="1067" font-size="10" fill="${tertiary}" font-weight="500">${escapeXml(data.footer)}</text>`;
+    svg += `<text x="${w-mx}" y="1067" font-size="10" fill="${tertiary}" font-weight="500" text-anchor="end">A4 · ${escapeXml(data.reference)} · ${pageIndex + 1}/${pageCount}</text>`;
+    return svg + '</svg>';
+  }
+
+  function fieldMetrics(label, lines, options={}){
+    const lineHeight = options.lineHeight || 18;
+    const header = options.continued ? 30 : 38;
+    const contentHeight = Math.max(1, lines.length) * lineHeight;
+    return Math.max(options.minHeight || 64, header + contentHeight + 16);
+  }
+
+  function svgFieldBox(label, lines, x, y, w, h, options={}){
+    const labelFill = '#A2A2A8';
+    const primary = '#111111';
+    const line = '#E5E5EA';
+    const boxFill = options.fill || '#F7F7F8';
+    const lineHeight = options.lineHeight || 18;
+    const labelText = options.continued ? `${label} ${selectedLanguage === 'de' ? 'FORTSETZUNG' : 'CONTINUED'}` : label;
+    let svg = `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="14" fill="${boxFill}" stroke="${line}" stroke-width="1"/>`;
+    svg += `<text x="${x+14}" y="${y+24}" font-size="11" fill="${labelFill}" font-weight="700" letter-spacing="0.6">${escapeXml(String(labelText).toUpperCase())}</text>`;
+    svg += svgTextBlock(lines, x+14, y+(options.continued ? 44 : 48), options.size || 13, lineHeight, primary, options.bold ? 600 : 500);
+    return svg;
+  }
+
+  function createFieldBlock(label, value, width, options={}){
+    const maxChars = options.maxChars || Math.max(18, Math.floor(width / 8.2));
+    const lines = splitLines(value || '—', maxChars);
+    return {type:'field', label, lines, width, options};
+  }
+
+  function buildBriefSvgPages(){
+    const data = getReceiptData();
+    const w = 794, h = 1123;
+    const mx = 72;
+    const primary = '#111111';
+    const secondary = '#77777D';
+    const tertiary = '#A2A2A8';
+    const line = '#E5E5EA';
+    const colGap = 12;
+    const colW = (w - mx * 2 - colGap) / 2;
+    const fullW = w - mx * 2;
+    const maxY = 1016;
+    const pages = [];
+    let pageIndex = 0;
+    let svg = openPage(pageIndex, 1);
+    let y = 82;
+
+    svg += `<text x="${mx}" y="${y}" font-size="12" fill="${tertiary}" font-weight="700" letter-spacing="1.8">${escapeXml(data.pdfKicker.toUpperCase())}</text>`;
+    y += 52;
+    svg += `<text x="${mx}" y="${y}" font-size="48" fill="${primary}" font-weight="600" letter-spacing="-2.2">${escapeXml(data.pdfTitle)}</text>`;
+    y += 26;
+    svg += svgTextBlock(svgLines(data.pdfSub, 90, 2), mx, y, 13, 18, secondary, 400);
+    y += 44;
+    svg += `<line x1="${mx}" y1="${y}" x2="${w-mx}" y2="${y}" stroke="${line}" stroke-width="1"/>`;
+    y += 22;
+
+    function newPage(){
+      pages.push({svg, data});
+      pageIndex += 1;
+      svg = openPage(pageIndex, 1);
+      y = 164;
+    }
+
+    function addRow(leftBlock, rightBlock){
+      const leftH = fieldMetrics(leftBlock.label, leftBlock.lines, leftBlock.options);
+      const rightH = fieldMetrics(rightBlock.label, rightBlock.lines, rightBlock.options);
+      const rowH = Math.max(leftH, rightH);
+      if (y + rowH > maxY) newPage();
+      svg += svgFieldBox(leftBlock.label, leftBlock.lines, mx, y, colW, rowH, leftBlock.options);
+      svg += svgFieldBox(rightBlock.label, rightBlock.lines, mx+colW+colGap, y, colW, rowH, rightBlock.options);
+      y += rowH + 12;
+    }
+
+    function addLong(block){
+      const opts = block.options || {};
+      const lineHeight = opts.lineHeight || 18;
+      let remaining = block.lines.slice();
+      let continued = false;
+      while (remaining.length){
+        if (y + 72 > maxY) newPage();
+        const header = continued ? 30 : 38;
+        const available = Math.max(1, Math.floor((maxY - y - header - 16) / lineHeight));
+        const lines = remaining.splice(0, Math.max(1, available));
+        const partOptions = {...opts, continued};
+        const boxH = fieldMetrics(block.label, lines, partOptions);
+        svg += svgFieldBox(block.label, lines, mx, y, fullW, boxH, partOptions);
+        y += boxH + 12;
+        continued = true;
+        if (remaining.length && y + 72 > maxY) newPage();
+      }
+    }
+
+    addRow(createFieldBlock(data.labels.ref, data.reference, colW, {minHeight:64, maxChars:30}), createFieldBlock(data.labels.submitted, data.submittedAt, colW, {minHeight:64, maxChars:30}));
+    addRow(createFieldBlock(data.labels.name, data.name, colW, {minHeight:64, maxChars:34}), createFieldBlock(data.labels.company, data.company, colW, {minHeight:64, maxChars:34}));
+    addLong(createFieldBlock(data.labels.contact, data.contact, fullW, {minHeight:64, maxChars:80, lineHeight:18}));
+    addRow(createFieldBlock(data.labels.type, data.type, colW, {minHeight:64, maxChars:34}), createFieldBlock(data.labels.deadline, data.deadline, colW, {minHeight:64, maxChars:34}));
+    addLong(createFieldBlock(data.labels.title, data.title, fullW, {minHeight:64, bold:true, size:14, maxChars:82, lineHeight:18}));
+    if (data.budget) addLong(createFieldBlock(data.labels.budget, data.budget, fullW, {minHeight:64, maxChars:82, lineHeight:18}));
+    addLong(createFieldBlock(data.labels.summary, data.summary, fullW, {minHeight:96, maxChars:84, lineHeight:18, fill:'#FAFAFB'}));
+    if (data.notes) addLong(createFieldBlock(data.labels.notes, data.notes, fullW, {minHeight:82, maxChars:84, lineHeight:18, fill:'#FAFAFB'}));
+
+    pages.push({svg, data});
+    return pages.map((page, index) => closePage(page.svg, index, pages.length, data));
+  }
+
+  function buildBriefSvg(){
+    return buildBriefSvgPages()[0];
+  }
+
+  function renderBriefPreview(){
+    /* Preview intentionally disabled. Export is generated from the same A4 SVG layout internally. */
+  }
+
+  function svgToDataUrl(svg){
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  }
+
+  function imageFromUrl(url){
+    return new Promise((resolve,reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error('Could not load SVG image.'));
+      image.src = url;
+    });
+  }
+
+  async function svgPageToCanvas(svg, scale=2.5){
+    const image = await imageFromUrl(svgToDataUrl(svg));
+    if (image.decode) {
+      try { await image.decode(); } catch(_) {}
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(794 * scale);
+    canvas.height = Math.round(1123 * scale);
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Canvas is not available.');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.drawImage(image,0,0,canvas.width,canvas.height);
+    return canvas;
+  }
+
+  function downloadBlob(blob,name){
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 3000);
+  }
+
+  function createPdfFromJpegs(images,pageW,pageH){
+    const encoder = new TextEncoder();
+    const chunks = [];
+    const offsets = [0];
+    let length = 0;
+    const addText = text => { const bytes = encoder.encode(text); chunks.push(bytes); length += bytes.length; };
+    const addBytes = bytes => { chunks.push(bytes); length += bytes.length; };
+    const mark = () => offsets.push(length);
+    const pageCount = images.length;
+    const pagesObj = 2;
+    const firstPageObj = 3;
+    const firstContentObj = firstPageObj + pageCount;
+    const firstImageObj = firstContentObj + pageCount;
+
+    addText('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
+    mark(); addText(`1 0 obj\n<< /Type /Catalog /Pages ${pagesObj} 0 R >>\nendobj\n`);
+    mark(); addText(`${pagesObj} 0 obj\n<< /Type /Pages /Kids [${Array.from({length:pageCount}, (_,i)=>`${firstPageObj+i} 0 R`).join(' ')}] /Count ${pageCount} >>\nendobj\n`);
+
+    for(let i=0;i<pageCount;i++){
+      const pageObj = firstPageObj + i;
+      const contentObj = firstContentObj + i;
+      const imageObj = firstImageObj + i;
+      mark(); addText(`${pageObj} 0 obj\n<< /Type /Page /Parent ${pagesObj} 0 R /MediaBox [0 0 ${pageW.toFixed(2)} ${pageH.toFixed(2)}] /Resources << /XObject << /Im${i} ${imageObj} 0 R >> >> /Contents ${contentObj} 0 R >>\nendobj\n`);
+    }
+
+    for(let i=0;i<pageCount;i++){
+      const contentObj = firstContentObj + i;
+      const content = `q\n${pageW.toFixed(2)} 0 0 ${pageH.toFixed(2)} 0 0 cm\n/Im${i} Do\nQ\n`;
+      mark(); addText(`${contentObj} 0 obj\n<< /Length ${content.length} >>\nstream\n${content}endstream\nendobj\n`);
+    }
+
+    for(let i=0;i<pageCount;i++){
+      const imageObj = firstImageObj + i;
+      const img = images[i];
+      mark(); addText(`${imageObj} 0 obj\n<< /Type /XObject /Subtype /Image /Width ${img.width} /Height ${img.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${img.bytes.length} >>\nstream\n`);
+      addBytes(img.bytes); addText('\nendstream\nendobj\n');
+    }
+
+    const xref = length;
+    addText(`xref\n0 ${offsets.length}\n0000000000 65535 f \n`);
+    for(let i=1;i<offsets.length;i++) addText(String(offsets[i]).padStart(10,'0') + ' 00000 n \n');
+    addText(`trailer\n<< /Size ${offsets.length} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`);
+    const out = new Uint8Array(length);
+    let offset = 0;
+    chunks.forEach(chunk => { out.set(chunk, offset); offset += chunk.length; });
+    return out;
+  }
+
+  async function downloadA4Pdf(){
+    try{
+      savePdfButton.disabled = true;
+      const data = getReceiptData();
+      const pages = buildBriefSvgPages();
+      const images = [];
+      for (const pageSvg of pages){
+        const canvas = await svgPageToCanvas(pageSvg);
+        const jpegBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', .95));
+        if (!jpegBlob) throw new Error('Could not render PDF image.');
+        images.push({bytes:new Uint8Array(await jpegBlob.arrayBuffer()), width:canvas.width, height:canvas.height});
+      }
+      const pdfBytes = createPdfFromJpegs(images, 595.28, 841.89);
+      downloadBlob(new Blob([pdfBytes], {type:'application/pdf'}), `${sanitizeFilename(`${data.reference}-project-brief-a4`)}.pdf`);
+    }catch(error){
+      console.error(error);
+      alert(selectedLanguage === 'de' ? 'PDF-Export fehlgeschlagen. Bitte erneut versuchen.' : 'PDF export failed. Please try again.');
+    }finally{
+      savePdfButton.disabled = false;
+    }
+  }
+})();
+</script>
+</body>
+</html>
